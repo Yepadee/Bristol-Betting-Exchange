@@ -1,10 +1,12 @@
+from time import time
+
 class Bet(object):
     def __init__(self, bettor_id: int, event_id: int, odds: int, stake: int):
         self.bettor_id = bettor_id
         self.event_id = event_id
         self.odds = odds
         self.stake = stake
-        self.time = 0 # TODO
+        self.time = time() # TODO
     
     def __str__(self):
         return '{bet_type=%s, bettor_id=%d, event_id=%d, odds=%5.f, stake=%d, time=%f}' % \

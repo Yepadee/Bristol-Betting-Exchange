@@ -1,5 +1,6 @@
 from DTOs import *
 
+from time import time
 
 class BettingExchangeView(object):
     def add_bet(self, bet: Bet) -> None:
@@ -35,7 +36,7 @@ class BettingExchange(BettingExchangeView):
         self.bets[bet.id] = bet
         self.__notify_obeservers()
 
-    def distribute_winnings(event_winner_id: int) -> None:
+    def distribute_winnings(successful_event_id: int) -> None:
         pass
 
 
@@ -45,6 +46,4 @@ class BettingExchange(BettingExchangeView):
 if __name__ == "__main__":
     exchange = BettingExchange([i+1 for i in range(20)])
     bet = Back(12, 102, 12, 12)
-    b = Backs()
-    b.test()
     print(bet)
