@@ -1,6 +1,7 @@
 from time import time
+from printutils import Printable
 
-class Bet(object):
+class Bet(Printable):
     def __init__(self, bettor_id: int, event_id: int, odds: int, stake: int):
         self.__bettor_id = bettor_id
         self.__event_id = event_id
@@ -40,6 +41,9 @@ class Bet(object):
     def get_matched(self) -> int:
         '''Returns how much of this bet has been matched.'''
         return self.__matched
+
+    def get_unmatched(self) -> int:
+        return self.__stake - self.__matched
 
     def get_time(self) -> float:
         '''Returns the time this bet was placed.'''

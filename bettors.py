@@ -1,10 +1,11 @@
 from bets import Bet
+from printutils import Printable
 
-class BettingExchangeView(object):
+class BettingExchangeView(Printable):
     def add_bet(self, bet: Bet) -> None:
         pass
 
-class Bettor(object):
+class Bettor(Printable):
     def __init__(self, id: int):
         self.id = id
         self.bets = []
@@ -16,6 +17,6 @@ class Bettor(object):
         '''
         pass
 
-class NaiveBettor(object):
+class NaiveBettor(Printable):
     def respond(exchange: BettingExchangeView):
         pass

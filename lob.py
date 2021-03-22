@@ -1,6 +1,7 @@
 from bets import *
+from printutils import Printable
 
-class OrderBookHalf(object):
+class OrderBookHalf(Printable):
     def __init__(self):
         self.__total_stakes = {}
         self.__bets = {}
@@ -10,12 +11,14 @@ class OrderBookHalf(object):
 
     def add_bet(self, bet: Bet) -> None:
         '''Adds a new bet to the order book'''
-        if bet.odds in self.total_stakes:
-            self.total_stakes[bet.odds] += bet.stake
-            self.__bets[bet.odds].append(bet)
+        odds = bet.get_odds()
+        unmatched = bet.get_unmatched()
+        if odds in self.__bets:
+            self.__total_stakes[odds] += unmatched
+            self.__bets[odds].append(bet)
         else:
-            self.total_stakes[bet.odds] = bet.stake
-            self.__bets[bet.odds] = [bet]
+            self.__total_stakes[odds] = unmatched
+            self.__bets[odds] = [bet]
 
     def has_odds(self, odds: int) -> bool:
         return odds in self.__bets
@@ -27,11 +30,16 @@ class OrderBookHalf(object):
         Returns how much of the bet's stake could not be matched
         '''
 
+        if new_bet.get_matched() > 0:
+            raise Exception("ERROR: Attempted to match a bet that has already been matched!")
+
         if not self.has_odds(new_bet.get_odds()): # If the book does not offer this bet's odds, return the bet's entire stake since none of it could be matched
             return new_bet.get_stake()
 
         
         bets = self.__bets[new_bet.get_odds()]
+        
+
         new_bet_stake = new_bet.get_stake()
         qty_to_match = new_bet_stake
 
@@ -46,23 +54,23 @@ class OrderBookHalf(object):
         while total_matched < new_bet_stake and index < len(bets):
             bet = bets[index] # Retrieve bets in order they were posted
             
-
             qty_matched = bet.match(qty_to_match) # Match the quantity to this bet and retrieve how much was successfully matched
             qty_to_match -= qty_matched # Update how much quantity is left that we need to match
             total_matched += qty_matched # Update how much we have successfully matched
 
             if bet.get_stake() == bet.get_matched(): # If all of this bet's stake has been matched, remove it from the lob
                 bets.pop(index)
-
+                
             index += 1
 
+        self.__total_stakes[new_bet.get_odds()] -= total_matched # Update the total stake at these odds
         new_bet.match(total_matched) # Match the original bet with how much we were able to successfully match with bets from the lob
         return new_bet_stake - total_matched
 
 
         
 
-class OrderBook(object):
+class OrderBook(Printable):
     def __init__(self, event_id: int):
         self.__event_id = event_id
         self.__backs = OrderBookHalf()
@@ -80,6 +88,12 @@ class OrderBook(object):
         if total_unmatched > 0: # If the bet wasnt totally matched, add it to the lob in the hope it can be matched by future bets
             self.__lays.add_bet(bet)
 
+    def to_string(self, level: int) -> str:
+        indent = 0
+        return self.apply_indent('{\n'
+                f'  event_id={self.__event_id},\n'
+                f'  backs={self.__backs.to_string(level + 1)},\n'
+                f'  lays={self.__lays.to_string(level + 1)}\n'
+                '}', level)
     def __str__(self) -> str:
-        return '{event_id=%d, backs=%s, lays=%s}' % \
-               (self.__event_id, self.best_back, self.best_lay, self.__backs, self.__lays)
+        return self.to_string(0)
