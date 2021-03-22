@@ -44,7 +44,7 @@ class OrderBookHalf(object):
             self.bets[bet.odds] = [bet]
         
 
-class EventBets(object):
+class OrderBook(object):
     def __init__(self, event_id: int):
         self.event_id = event_id
         self.backs = OrderBookHalf()
@@ -55,7 +55,9 @@ class EventBets(object):
                (self.event_id, self.best_back, self.best_lay, self.backs, self.lays)
 
     def add_bet(self, bet: Back) -> None:
+        print("Added Back")
         self.backs.add_bet(bet)
 
     def add_bet(self, bet: Lay) -> None:
+        print("Added Lay")
         self.lays.add_bet(bet)
