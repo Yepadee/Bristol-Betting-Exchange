@@ -36,24 +36,18 @@ class BettingExchange(BettingExchangeView):
         pass
 
     def __str__(self) -> str:
-        return ("""{"""
-        """\n  lobs: {\n%s\n  }, """
-        """\n  bettors: {\n%s\n  } """
-        """\n}""") % (
-            reduce(
-                (lambda txt, event_lob: ("%s,\n%s" % (event_lob.to_string(2), txt))),
-                self.__lob.values(), ""
-            ),
-            reduce(
-                (lambda bettor, txt: ("%s %s" % (bettor.to_string(2), txt))),
-                self.__bettors, ""
-            )
+        return (
+            'lobs: {\n%s\n},\n'
+            'bettors: {\n%s\n} '
+        ) % (
+            apply_indent(",\n".join(map((lambda x: "{\n%s\n}" % apply_indent(str(x))), self.__lob.values()))),
+            apply_indent(",\n".join(map((lambda x: "{\n%s\n}" % apply_indent(str(x))), self.__bettors)))
         )
 
 
 
 if __name__ == "__main__":
-    exchange = BettingExchange([i+1 for i in range(20)])
+    exchange = BettingExchange([i+1 for i in range(3)])
     bet = Back(12, 1, 12, 12)
     print(bet)
 

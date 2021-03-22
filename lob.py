@@ -1,7 +1,9 @@
 from bets import *
-from printutils import Printable
+from printutils import apply_indent
 
-class OrderBookHalf(Printable):
+from functools import reduce
+
+class OrderBookHalf(object):
     def __init__(self):
         self.__total_stakes = {}
         self.__bets = {}
@@ -67,10 +69,13 @@ class OrderBookHalf(Printable):
         new_bet.match(total_matched) # Match the original bet with how much we were able to successfully match with bets from the lob
         return new_bet_stake - total_matched
 
-
+    def __str__(self) -> str:
+        return (
+            'total_stakes={\n%s\n}'
+        ) % apply_indent("\n".join(map((lambda odds: f'{odds/100.0}: £{self.__total_stakes[odds]/100.0}'), self.__total_stakes.keys())))
         
 
-class OrderBook(Printable):
+class OrderBook(object):
     def __init__(self, event_id: int):
         self.__event_id = event_id
         self.__backs = OrderBookHalf()
@@ -88,12 +93,10 @@ class OrderBook(Printable):
         if total_unmatched > 0: # If the bet wasnt totally matched, add it to the lob in the hope it can be matched by future bets
             self.__lays.add_bet(bet)
 
-    def to_string(self, level: int) -> str:
-        indent = 0
-        return self.apply_indent('{\n'
-                f'  event_id={self.__event_id},\n'
-                f'  backs={self.__backs.to_string(level + 1)},\n'
-                f'  lays={self.__lays.to_string(level + 1)}\n'
-                '}', level)
     def __str__(self) -> str:
-        return self.to_string(0)
+        indent = 0
+        return (
+            f'event_id={self.__event_id},\n'
+            f'backs={{\n{apply_indent(str(self.__backs))}\n}},\n'
+            f'lays={{\n{apply_indent(str(self.__lays))}\n}}\n'
+        )

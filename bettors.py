@@ -1,11 +1,11 @@
 from bets import Bet
-from printutils import Printable
+from printutils import apply_indent
 
-class BettingExchangeView(Printable):
+class BettingExchangeView(object):
     def add_bet(self, bet: Bet) -> None:
         pass
 
-class Bettor(Printable):
+class Bettor(object):
     def __init__(self, id: int):
         self.id = id
         self.bets = []
@@ -17,6 +17,6 @@ class Bettor(Printable):
         '''
         pass
 
-class NaiveBettor(Printable):
+class NaiveBettor(object):
     def respond(exchange: BettingExchangeView):
         pass

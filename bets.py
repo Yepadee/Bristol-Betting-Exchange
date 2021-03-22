@@ -1,7 +1,7 @@
 from time import time
-from printutils import Printable
+from printutils import apply_indent
 
-class Bet(Printable):
+class Bet(object):
     def __init__(self, bettor_id: int, event_id: int, odds: int, stake: int):
         self.__bettor_id = bettor_id
         self.__event_id = event_id
