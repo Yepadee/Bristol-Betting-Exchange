@@ -10,6 +10,10 @@ class Bettor(object):
         self.bets = []
 
     def respond(exchange: BettingExchangeView):
+        '''
+        Define the actions the bettor should take in response
+        to a new bet being posted to the exchange here.
+        '''
         pass
 
 class NaiveBettor(object):

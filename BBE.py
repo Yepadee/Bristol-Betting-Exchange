@@ -15,12 +15,18 @@ class BettingExchange(BettingExchangeView):
         self.observers = []
 
     def add_bettor(self, bettor: Bettor) -> None:
+        '''Register a bettor to recieve updates from the exchange'''
         self.observers.append(bettor)
 
     def __notify_bettors(self) -> None:
+        '''
+        Notify all bettors that a new bet has taken place
+        and give them the opportunity to respond.
+        '''
         map(lambda bettor: bettor.respond(self), self.observers) # Notify each observer
 
     def add_bet(self, bet: Bet) -> None:
+        '''Add a new bet to the exchange'''
         self.lob[bet.event_id].add_bet(bet)
         self.bets[bet.id] = bet
         self.__notify_bettors() # Notify observers to respond to new bet
