@@ -1,4 +1,8 @@
-from BBE import BettingExchangeView
+from bets import Bet
+
+class BettingExchangeView(object):
+    def add_bet(self, bet: Bet) -> None:
+        pass
 
 class Bettor(object):
     def __init__(self, id: int):
