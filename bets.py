@@ -16,7 +16,7 @@ class Bet(object):
         Returns how much of the quantity could be matched to this bet.
         '''
 
-        unmatched = self.stake - self.__matched # Calculate how much money is left to be matched
+        unmatched = self.get_unmatched() # Calculate how much money is left to be matched
         qty_matched = quantity if quantity < unmatched else unmatched # Calculate how much of this quantity can be matched to this bet
         self.__matched += qty_matched # Update this bet's matched stake
 
@@ -49,17 +49,30 @@ class Bet(object):
         '''Returns the time this bet was placed.'''
         return self.__time
     
+    def get_winnings(self) -> int:
+        raise Exception("get_winnings undefined")
+
     def __str__(self) -> str:
-        return '{bet_type=%s, bettor_id=%d, event_id=%d, odds=%5.f, stake=%d, time=%f}' % \
-               (self._bet_type, self.__bettor_id, self.__event_id, self.__odds, self.__stake, self.__time)
+        return '{bet_type=%s, bettor_id=%d, event_id=%d, odds=%.2f, stake=£%.2f, matched=£%.2f time=%f}' % \
+               (self._bet_type, self.__bettor_id, self.__event_id, self.__odds/100.0, self.__stake/100.0, self.__matched/100.0, self.__time)
 
 class Back(Bet):
     def __init__(self, bettor_id: int, event_id: int, odds: int, stake: int):
         super().__init__(bettor_id, event_id, odds, stake)
         self._bet_type = "Back"
 
+    def get_winnings(self) -> int:
+        return self.get_odds() * self.get_matched()
+
 class Lay(Bet):
     def __init__(self, bettor_id: int, event_id: int, odds: int, stake: int):
         super().__init__(bettor_id, event_id, odds, stake)
         self._bet_type = "Lay"
+
+    def get_winnings(self) -> int:
+        '''Return liability plus winnings'''
+        return self.get_odds() * self.get_stake() + self.get_matched()
+
+    def get_unmatched_liability(self) -> int:
+        return self.get_odds() * self.get_unmatched()
 

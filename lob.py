@@ -1,8 +1,6 @@
 from bets import *
 from printutils import apply_indent
 
-from functools import reduce
-
 class OrderBookHalf(object):
     def __init__(self):
         self.__total_stakes = {}
@@ -66,8 +64,19 @@ class OrderBookHalf(object):
             index += 1
 
         self.__total_stakes[new_bet.get_odds()] -= total_matched # Update the total stake at these odds
+        if self.__total_stakes[new_bet.get_odds()] == 0:
+            self.__total_stakes.pop(new_bet.get_odds())
         new_bet.match(total_matched) # Match the original bet with how much we were able to successfully match with bets from the lob
         return new_bet_stake - total_matched
+
+    def get_view(self) -> dict:
+        '''Returns a copy of the total stakes for each odds'''
+        sorted_odds = sorted(self.__total_stakes.keys())
+        return {
+            'odds': sorted(self.__total_stakes.keys()),
+            'stakes': list(map((lambda odd: self.__total_stakes[odd]), sorted_odds))
+        }
+        
 
     def __str__(self) -> str:
         return apply_indent(",\n".join(map((lambda odds: f'{odds/100.0} | £{self.__total_stakes[odds]/100.0}'), self.__total_stakes.keys())))
@@ -79,17 +88,24 @@ class OrderBook(object):
         self.__backs = OrderBookHalf()
         self.__lays = OrderBookHalf()
 
-    def add_bet(self, bet: Back) -> None:
-        '''Adds a new back bet to the orderbook'''
-        total_unmatched = self.__lays.match_bet(bet) # Attempt to match the bet with bets on the other side of the lob
-        if total_unmatched > 0: # If the bet wasnt totally matched, add it to the lob in the hope it can be matched by future bets
-            self.__backs.add_bet(bet)
+    def add_bet(self, bet: Bet) -> None:
+        '''Adds a new bet to the orderbook'''
+        if type(bet) is Back:
+            total_unmatched = self.__lays.match_bet(bet) # Attempt to match the bet with bets on the other side of the lob
+            if total_unmatched > 0: # If the bet wasnt totally matched, add it to the lob in the hope it can be matched by future bets
+                self.__backs.add_bet(bet)
+        elif type(bet) is Lay:
+            total_unmatched = self.__backs.match_bet(bet) # Attempt to match the bet with bets on the other side of the lob
+            if total_unmatched > 0: # If the bet wasnt totally matched, add it to the lob in the hope it can be matched by future bets
+                self.__lays.add_bet(bet)
+        else:
+            raise Exception("Invalid bet type %s!" % str(type(bet)))
 
-    def add_bet(self, bet: Lay) -> None:
-        '''Adds a new lay bet to the orderbook'''
-        total_unmatched = self.__backs.match_bet(bet) # Attempt to match the bet with bets on the other side of the lob
-        if total_unmatched > 0: # If the bet wasnt totally matched, add it to the lob in the hope it can be matched by future bets
-            self.__lays.add_bet(bet)
+    def get_view(self) -> dict:
+        return {
+            'backs' : self.__backs.get_view(),
+            'lays' : self.__lays.get_view(),
+        }
 
     def __str__(self) -> str:
         indent = 0
