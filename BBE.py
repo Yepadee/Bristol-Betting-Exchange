@@ -47,9 +47,12 @@ class BettingExchange(BettingExchangeView):
 
 
 if __name__ == "__main__":
-    exchange = BettingExchange([i+1 for i in range(3)])
-    bet = Back(12, 1, 12, 12)
-    print(bet)
+    exchange = BettingExchange([i+1 for i in range(1)])
+    bet1 = Back(bettor_id=12, event_id=1, odds=122, stake=1000)
+    bet2 = Back(bettor_id=12, event_id=1, odds=120, stake=1000)
+    print(bet1)
 
-    exchange.add_bet(bet)
+    exchange.add_bet(bet1)
+    exchange.add_bet(bet2)
+
     print(exchange)

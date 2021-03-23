@@ -70,9 +70,7 @@ class OrderBookHalf(object):
         return new_bet_stake - total_matched
 
     def __str__(self) -> str:
-        return (
-            'total_stakes={\n%s\n}'
-        ) % apply_indent("\n".join(map((lambda odds: f'{odds/100.0}: £{self.__total_stakes[odds]/100.0}'), self.__total_stakes.keys())))
+        return apply_indent(",\n".join(map((lambda odds: f'{odds/100.0} | £{self.__total_stakes[odds]/100.0}'), self.__total_stakes.keys())))
         
 
 class OrderBook(object):
