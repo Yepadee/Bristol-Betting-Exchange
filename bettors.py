@@ -11,24 +11,29 @@ class BettingExchangeView(object):
 
 
 class Bettor(object):
-    def __init__(self, id: int, balance: int, name: str):
+    def __init__(self, name: str, id: int, balance: int, num_simulations: int):
+        self.__name = name
+
         self.__id = id
         self.__balance = balance
-        self.__name = name
+        self.__num_simulations = num_simulations
         self.__backs = []
         self.__lays = []
         
     def get_id(self) -> int:
         return self.__id
 
+    def get_balance(self) -> int:
+        return self.__balance
+
+    def get_num_simulations(self) -> int:
+        return self.__num_simulations
+
     def get_backs(self) -> list:
         return self.__backs
 
     def get_lays(self) -> list:
         return self.__lays
-
-    def get_balance(self) -> int:
-        return self.__balance
 
     def _new_back(self, event_id: int, odds: int, stake: int) -> Back:
         '''Create a new back and add to bettors record of backs'''
@@ -62,21 +67,44 @@ class Bettor(object):
             else:
                 self.__balance += lay.get_unmatched_liability() # Return unmatched liability
 
-    def respond(exchange: BettingExchangeView):
+    def on_opinion_update(self, simulation_results: dict):
         '''
-        Define the actions the bettor should take in response
+        Defines the actions the bettor should take in response
+        to its opinion on the race outcome being updated.
+        '''
+        raise Exception("on_opinion_update undefined")
+
+    def on_market_open(exchange: BettingExchangeView):
+        '''
+        Defines the actions the bettor should take when
+        the market first opens.
+        '''
+        raise Exception("on_market_open undefined")
+
+    def on_market_change(exchange: BettingExchangeView):
+        '''
+        Defines the actions the bettor should take in response
         to a new bet being posted to the exchange here.
         '''
-        raise Exception("respond undefined")
+        raise Exception("on_market_change undefined")
 
     def __str__(self) -> str:
         return '{name=%s, id=%d, balance=£%.2f, backs=%d, lays=%d}' % \
                (self.__name, self.__id, self.__balance/100.0, len(self.__backs), len(self.__lays))
 
 class NaiveBettor(Bettor):
-    def __init__(self, id: int, balance: int):
-        super().__init__(id, balance, "NAIVE")
+    '''A bettor who simply bets on who he thinks will win at the start'''
 
-    def respond(exchange: BettingExchangeView):
+    def __init__(self, id: int, balance: int, num_simulations: int):
+        super().__init__("NAIVE", id, balance, num_simulations)
+
+    def on_market_open(exchange: BettingExchangeView):
+        pass
+
+    def on_opinion_update(self, simulation_results: dict):
+        pass
+
+    def on_market_change(exchange: BettingExchangeView):
         lob = exchange.get_lob_view()
-        print("respond: ", )
+        print("respond: ")
+
