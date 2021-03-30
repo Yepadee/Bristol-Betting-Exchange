@@ -10,12 +10,14 @@ class BettingExchangeView(object):
     def add_bet(self, bet: Bet) -> None:
         raise Exception("add_bet undefined")
 
+    def cancel_bet(self, bet: Bet) -> None:
+        raise Exception("cancel_bet undefined")
+
     def get_lob_view(self) -> dict:
         raise Exception("get_lob_view undefined")
 
     def get_n_events(self) -> int:
         raise Exception("get_n_events undefined")
-
 
 class Bettor(object):
     def __init__(self, name: str, id: int, balance: int, num_simulations: int):
@@ -73,14 +75,14 @@ class Bettor(object):
             else:
                 self.__balance += lay.get_unmatched_liability() # Return unmatched liability
 
-    def on_opinion_update(self, simulation_winner_probs: np.array(np.float32)) -> None:
+    def on_opinion_update(self, exchange_view: BettingExchangeView, percent_complete: float, simulation_winner_probs: np.array(np.float32)) -> None:
         '''
         Defines the actions the bettor should take in response
         to its opinion on the race outcome being updated.
         '''
         raise Exception("on_opinion_update undefined")
 
-    def on_market_change(exchange: BettingExchangeView) -> None:
+    def on_market_change(self, exchange_view: BettingExchangeView) -> None:
         '''
         Defines the actions the bettor should take in response
         to a new bet being posted to the exchange here.
@@ -97,9 +99,9 @@ class NaiveBettor(Bettor):
     def __init__(self, id: int, balance: int, num_simulations: int):
         super().__init__("NAIVE", id, balance, num_simulations)
 
-    def on_opinion_update(self, exchange_view: BettingExchangeView, sim_step_no: int, simulation_winner_probs: np.array(np.float32)) -> None:
+    def on_opinion_update(self, exchange_view: BettingExchangeView, percent_complete: float, simulation_winner_probs: np.array(np.float32)) -> None:
         #print(simulation_winner_probs * self.get_num_simulations())
-        plot_winners_freqs(exchange_view.get_n_events(), simulation_winner_probs * self.get_num_simulations(), f'output/{sim_step_no}/fig{self.get_id()}.png')
+        plot_winners_freqs(exchange_view.get_n_events(), simulation_winner_probs * self.get_num_simulations(), 'output/%d/fig%s.png' % (percent_complete * 100, self.get_id()))
 
     def on_market_change(exchange_view: BettingExchangeView) -> None:
         lob = exchange_view.get_lob_view()

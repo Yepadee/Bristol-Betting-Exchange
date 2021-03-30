@@ -5,17 +5,17 @@ from exchange import BettingExchange
 
 import sys
 sys.path.append('../BBE-Racing-Sim/')
-
 from racesim import *
 
 
-
-def step(exchange: BettingExchange, race: RaceSimSerial, race_simulations: RaceSimParallel, opinion_update_frequency: int, step_no: int):
+def step(exchange: BettingExchange, race: RaceSimSerial, race_simulations: RaceSimParallel, opinion_update_frequency: int):
     competetor_positions = race.get_competetor_positions()
     predicted_winners = race_simulations.simulate_races(competetor_positions)
-    exchange.update_bettor_opinions(step_no, predicted_winners)
+    percent_complete = race.get_percent_complete()
+    exchange.update_bettor_opinions(percent_complete, predicted_winners)
+    exchange.get_bettor_reponses()
     race.step(opinion_update_frequency)
-    step_no += opinion_update_frequency
+
 
 if __name__ == "__main__":
     '''Load racesim config'''
@@ -43,11 +43,8 @@ if __name__ == "__main__":
     race: RaceSimSerial = RaceSimSerial(track_params, competetor_params)
     race_simulations: RaceSimParallel = RaceSimParallel(n_simulations, track_params, competetor_params)
 
-    step_no = 0
     while not race.is_finished():
-        step(exchange, race, race_simulations, opinion_update_frequency, step_no)
-        step_no += opinion_update_frequency
-        print(race.is_finished())
+        step(exchange, race, race_simulations, opinion_update_frequency)
 
     print(race.get_winner())
 

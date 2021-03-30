@@ -1,6 +1,6 @@
 from lob import OrderBook
 from bets import *
-from bettors import *
+from bettors import Bettor, BettingExchangeView
 from functools import reduce
 import random
 import numpy as np
@@ -15,6 +15,7 @@ class BettingExchange(BettingExchangeView):
         self.__n_events = n_events
         self.__bettors: list = []
         self.__lob_view: dict = {}
+        self.__has_new_bets = False
 
     def __notify_bettors_market_change(self) -> None:
         '''
@@ -49,14 +50,14 @@ class BettingExchange(BettingExchangeView):
 
         return winner_freqs / predicted_winners.size
 
-    def update_bettor_opinions(self, sim_step_no: int, predicted_winners: np.array(np.int8)) -> None:
+    def update_bettor_opinions(self, percent_complete: float, predicted_winners: np.array(np.int8)) -> None:
         last_index = 0
         bettor: Bettor
         for bettor in self.__bettors:
             num_sims = bettor.get_num_simulations()
             result_slice = predicted_winners[last_index : last_index + num_sims]
             winner_probs = self.__calculate_winner_probs(result_slice)
-            bettor.on_opinion_update(self, sim_step_no, winner_probs)
+            bettor.on_opinion_update(self, percent_complete, winner_probs)
             last_index += num_sims
 
     def add_bet(self, bet: Bet) -> None:
@@ -65,7 +66,13 @@ class BettingExchange(BettingExchangeView):
         if event_id not in self.__lob:
             raise Exception("Event with id %d does not exist on the exchange!" % event_id)
         self.__lob[event_id].add_bet(bet)
-        self.__notify_bettors_market_change() # Notify bettors to respond to new bet
+        self.__has_new_bets = True
+
+    def get_bettor_reponses(self) -> None:
+        '''Keep asking bettors to repond until no more bets are placed'''
+        while self.__has_new_bets:
+            self.__has_new_bets = False
+            self.__notify_bettors_market_change()
 
     def get_lob_view(self) -> dict:
         '''Retrieve a view of the exchange's limit order book'''
