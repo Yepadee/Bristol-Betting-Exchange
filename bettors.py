@@ -71,12 +71,15 @@ class Bettor(object):
 
     def cancel_unmatched(self) -> None:
         back: Back
+        sum_refund = 0
         for back in self.__backs:
             self.__balance += back.get_unmatched()
+            sum_refund += back.get_unmatched()
 
         lay: Lay
         for lay in self.__lays:
             self.__balance += lay.get_unmatched_liability()
+            sum_refund += lay.get_unmatched_liability()
 
     # The following methods must be implemented in a new betting agent:
     def get_bet(self, lob_view: dict) -> Bet:
@@ -114,8 +117,8 @@ class NaiveBettor(Bettor):
         if self.__last_event_probs is not None and self.get_balance() > 0:
             rdm = np.random.randint(0, 2)
             if rdm == 0:
-                stake = np.random.randint(1, self.get_balance() + 1)
-                if stake > 0:
+                if self.get_balance() > 200:
+                    stake = np.random.randint(200, self.get_balance() + 1)
                     best_competetor = np.argmax(self.__last_event_probs)
                     odds = round((1.0 / self.__last_event_probs[best_competetor]) * 100)
                     if odds == 100:
@@ -129,9 +132,9 @@ class NaiveBettor(Bettor):
                 prob = self.__last_event_probs[worst_competetor]
                 if prob < 0.99:
                     odds = round((1.0 / prob) * 100)
-                    max_stake = self.get_balance() // (odds // 100) #TODO: fix max_stake exceeding balance
-                    if max_stake > 1:
-                        stake = np.random.randint(1, max_stake)
+                    max_stake = int(self.get_balance() / (odds / 100.0)) #TODO: fix max_stake exceeding balance
+                    if max_stake > 200:
+                        stake = np.random.randint(200, max_stake)
                         return self._new_lay(worst_competetor + 1, odds, stake)
         
         return None

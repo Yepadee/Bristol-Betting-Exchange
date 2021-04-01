@@ -50,9 +50,6 @@ class Bet(object):
     def get_time(self) -> float:
         '''Returns the time this bet was placed.'''
         return self.__time
-    
-    def get_winnings(self) -> int:
-        raise Exception("get_winnings undefined")
 
     def __str__(self) -> str:
         return '{bet_type=%s, bettor_id=%d, event_id=%d, odds=%.2f, stake=£%.2f, matched=£%.2f time=%f}' % \
@@ -63,19 +60,11 @@ class Back(Bet):
         super().__init__(bettor_id, event_id, odds, stake)
         self._bet_type = "Back"
 
-    def get_winnings(self) -> int:
-        '''Return winnings plus unmatched stake'''
-        return self.get_odds() * self.get_matched() // 100 + self.get_unmatched()
-
 class Lay(Bet):
     def __init__(self, bettor_id: int, event_id: int, odds: int, stake: int):
         super().__init__(bettor_id, event_id, odds, stake)
         self._bet_type = "Lay"
 
-    def get_winnings(self) -> int:
-        '''Return liability plus winnings'''
-        return self.get_odds() * self.get_stake() // 100 + self.get_matched()
-
     def get_unmatched_liability(self) -> int:
-        return self.get_odds() * self.get_unmatched() // 100
+        return self.get_odds() * self.get_unmatched() // 100 - self.get_unmatched()
 

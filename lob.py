@@ -26,7 +26,7 @@ class MatchedBet(object):
         return self.__layer_id
 
     def get_layer_winnings(self) -> int:
-        return self.__stake + self.get_backer_winnings() # Return layed stake plus liability
+        return self.get_backer_winnings() # Return layed stake plus liability
 
     def get_backer_winnings(self) -> int:
         return self.__odds * self.__stake // 100
@@ -144,7 +144,6 @@ class OrderBookHalf(object):
         qty_matched = new_bet_stake - qty_unmatched
         new_bet.reduce_stake(qty_matched) # Update stake since some of the stake has now been filled by better odds
         bet_cost += self._get_bet_cost(odds, new_bet.get_unmatched())
-
         return bet_cost
 
     def _get_bet_cost(self, odds: int, stake: int) -> int:
@@ -172,7 +171,7 @@ class OrderBookHalf(object):
 
 class BackOrderBook(OrderBookHalf):
     def _get_bet_cost(self, odds: int, stake: int) -> int:
-        return odds * stake // 100
+        return odds * stake // 100 - stake
 
     def _get_ordered_odds(self) -> np.array(np.int32): 
         odds = np.array(list(self._total_stakes.keys()))
@@ -221,15 +220,15 @@ class OrderBook(object):
         other_book: OrderBookHalf = None
         
         if type(bet) is Back:
-            other_book = self.__lays
             order_book = self.__backs
+            other_book = self.__lays
         elif type(bet) is Lay:
-            other_book = self.__backs
             order_book = self.__lays
+            other_book = self.__backs
         else:
             raise Exception("Invalid bet type %s!" % str(type(bet)))
 
-        bet_cost = other_book.match_bet_better_odds(bet, matched_bets) # Attempt to match the bet with bets on the other side of the lob
+        bet_cost = other_book.match_bet_better_odds(bet, matched_bets) # Attempt to match the bet with bets on the other side of the lob with better odds than those requested
         total_unmatched = other_book.match_bet_at_odds(bet, matched_bets)
         if total_unmatched > 0: # If the bet wasnt totally matched, add it to the lob in the hope it can be matched by future bets
             order_book.add_bet(bet)
