@@ -118,6 +118,8 @@ class NaiveBettor(Bettor):
                 if stake > 0:
                     best_competetor = np.argmax(self.__last_event_probs)
                     odds = round((1.0 / self.__last_event_probs[best_competetor]) * 100)
+                    if odds == 100:
+                        odds += 1
                     return self._new_back(best_competetor + 1, odds, stake)
             else:
                 non_zero_probs = np.copy(self.__last_event_probs)
@@ -125,13 +127,12 @@ class NaiveBettor(Bettor):
                 worst_competetor = np.argmin(non_zero_probs)
 
                 prob = self.__last_event_probs[worst_competetor]
-                if prob <= 0:
-                    prob = 0.001
-                odds = round((1.0 / prob) * 100)
-                max_stake = self.get_balance() // (odds // 100)
-                if max_stake > 1:
-                    stake = np.random.randint(1, max_stake)
-                    return self._new_lay(worst_competetor + 1, odds, stake)
+                if prob < 0.99:
+                    odds = round((1.0 / prob) * 100)
+                    max_stake = self.get_balance() // (odds // 100) #TODO: fix max_stake exceeding balance
+                    if max_stake > 1:
+                        stake = np.random.randint(1, max_stake)
+                        return self._new_lay(worst_competetor + 1, odds, stake)
         
         return None
 

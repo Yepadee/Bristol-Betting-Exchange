@@ -7,6 +7,7 @@ import random
 import sys
 sys.path.append('../BBE-Racing-Sim/')
 from racesim import *
+from sim_output import plot_winners
 
 from functools import reduce
 
@@ -56,9 +57,9 @@ if __name__ == "__main__":
 
     '''Add Bettors'''
     bettors = {}
-    for i in range(1,20):
-        n_sims = 2 ** np.random.randint(1, 8)
-        bettors[i] = NaiveBettor(id=i, balance=500, num_simulations=n_sims)
+    for i in range(1,9):
+        n_sims = 2 ** np.random.randint(1, 9)
+        bettors[i] = NaiveBettor(id=i, balance=100, num_simulations=n_sims)
 
     # bettors[1] = NaiveBettor(id=1, balance=500, num_simulations=8)
     # bettors[2] = NaiveBettor(id=2, balance=500, num_simulations=16)
@@ -77,43 +78,49 @@ if __name__ == "__main__":
     race_simulations: RaceSimParallel = RaceSimParallel(n_simulations, track_params, competetor_params)
 
     t: int = 0
-    opinion_update_frequency: int = 10
-    step_duration: int = 1
+    opinion_update_period: int = 10
     percent_complete: float = 0.0
     lob_view = exchange.get_lob_view()
     matched_bets = []
     while not race.is_finished():
-        if t % step_duration == 0: # If time for 1 step has passed
-            if t % opinion_update_frequency == 0: # If it is time to update bettor opinions
-                competetor_positions = race.get_competetor_positions() # Get the current competetor positions
-                print("Running simulations...")
-                predicted_winners = race_simulations.simulate_races(competetor_positions) # Run all the simulations from these positions
-                n_events = exchange.get_n_events()
-                update_bettor_opinions(lob_view, bettor_list, percent_complete, predicted_winners) # Give each bettor their alocated number of simulation results
+        competetor_positions = race.get_competetor_positions() # Get the current competetor positions
+        print("Running simulations...")
+        predicted_winners = race_simulations.simulate_races(competetor_positions) # Run all the simulations from these positions
+        
+        n_events = exchange.get_n_events()
+        plot_winners(n_events, predicted_winners, f'output/{t}.png')
+        update_bettor_opinions(lob_view, bettor_list, percent_complete, predicted_winners) # Give each bettor their alocated number of simulation results
 
-            race.step(1) # Allow 1 timestep to pass in the race
-            percent_complete = race.get_percent_complete()
+        race.step(opinion_update_period) # Allow 1 timestep to pass in the race
+        percent_complete = race.get_percent_complete()
 
-        rdm_bettor: Bettor = pick_random_bettor(bettor_list) # Pick a random bettor
-        new_bet: Bet = rdm_bettor.get_bet(lob_view) # Get their bet
-        lob_view = exchange.get_lob_view()
+        random.shuffle(bettor_list)
+        rdm_bettor: Bettor
+        for rdm_bettor in bettor_list:
+            new_bet: Bet = rdm_bettor.get_bet(lob_view) # Get their bet
+            lob_view = exchange.get_lob_view()
 
-        if new_bet is not None: # If they want to post a new bet
-            matched_this_bet = []
-            bet_cost = exchange.add_bet(new_bet, matched_bets) # Add it to the exchange, and retrieve the bets it was matched with (if any) and the cost of placing the bet.
-            rdm_bettor.deduct_funds(bet_cost) # Charge the bettor the cost of the bet. (May be less then estimated cost if it was a lay bet and matched with bets with better odds)
-            matched_bets.extend(matched_this_bet)
-            bettor: Bettor
-            for bettor in bettor_list: # 
-                bettor.on_bets_matched(lob_view, percent_complete, matched_bets)
+            if new_bet is not None: # If they want to post a new bet
+                print("-----------------------------")
+                print("before: %s" % str(new_bet))
+                matched_this_bet = []
+                bet_cost = exchange.add_bet(new_bet, matched_this_bet) # Add it to the exchange, and retrieve the bets it was matched with (if any) and the cost of placing the bet.
+                print("after: %s" % str(new_bet))
+                print("cost: %d" % bet_cost)
+                print("matched: ")
+                for mb in matched_this_bet:
+                    print(mb)
+                print("-----------------------------\n")
+                rdm_bettor.deduct_funds(bet_cost) # Charge the bettor the cost of the bet. (May be less then estimated cost if it was a lay bet and matched with bets with better odds)
+                matched_bets.extend(matched_this_bet)
+                bettor: Bettor
+                for bettor in bettor_list: # 
+                    bettor.on_bets_matched(lob_view, percent_complete, matched_bets)
 
         t += 1
 
-    print(race.get_winner())
-    print(matched_bets)
-
     #exchange.
-    #print(exchange)
+    print(exchange)
     for bettor in bettor_list:
         bettor.cancel_unmatched()
 
@@ -127,3 +134,4 @@ if __name__ == "__main__":
         print(b)
 
     print(sum_bal)
+    print(race.get_winner())

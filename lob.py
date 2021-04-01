@@ -33,12 +33,12 @@ class MatchedBet(object):
 
     def __str__(self) -> str:
         return (
-            'event_id: %d\n'
-            'odds: %d\n'
-            'stake: %d\n'
-            'backer_id: %d\n'
-            'layer_id: %d\n'
-        ) % (self.__event_id, self.__odds, self.__stake, self.__backer_id, self.__layer_id)
+            '{event_id: %d, '
+            'odds: %.2f, '
+            'stake: £%.2f, '
+            'backer_id: %d, '
+            'layer_id: %d}'
+        ) % (self.__event_id, self.__odds / 100.0, self.__stake / 100.0, self.__backer_id, self.__layer_id)
 
 
 class OrderBookHalf(object):
@@ -168,7 +168,7 @@ class OrderBookHalf(object):
         }
         
     def __str__(self) -> str:
-        return apply_indent(",\n".join(map((lambda odds: f'{odds/100.0} | £{self._total_stakes[odds]/100.0}'), self._total_stakes.keys())))
+        return apply_indent(" | ".join(map((lambda odds: f'{odds/100.0} : £{self._total_stakes[odds]/100.0}'), self._get_ordered_odds())))
 
 class BackOrderBook(OrderBookHalf):
     def _get_bet_cost(self, odds: int, stake: int) -> int:
@@ -176,7 +176,7 @@ class BackOrderBook(OrderBookHalf):
 
     def _get_ordered_odds(self) -> np.array(np.int32): 
         odds = np.array(list(self._total_stakes.keys()))
-        odds[::-1].sort() # Highest odds first
+        odds.sort() # Lowest odds first
         return odds 
 
     def _get_better_odds(self, matching_odds: int) -> np.array(np.int32):
@@ -192,7 +192,7 @@ class LayOrderBook(OrderBookHalf):
 
     def _get_ordered_odds(self) -> np.array(np.int32):
         odds = np.array(list(self._total_stakes.keys()))
-        odds.sort() # Lowest odds first
+        odds[::-1].sort() # Highest odds first
         return odds
 
     def _get_better_odds(self, matching_odds: int):
@@ -247,6 +247,6 @@ class OrderBook(object):
         indent = 0
         return (
             f'event_id={self.__event_id},\n'
-            f'backs={{\n{apply_indent(str(self.__backs))}\n}},\n'
-            f'lays={{\n{apply_indent(str(self.__lays))}\n}}\n'
+            f'backs={{{str(self.__backs)}}}\n'
+            f'lays={{{str(self.__lays)}}}'
         )
