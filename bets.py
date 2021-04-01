@@ -19,8 +19,10 @@ class Bet(object):
         unmatched = self.get_unmatched() # Calculate how much money is left to be matched
         qty_matched = quantity if quantity < unmatched else unmatched # Calculate how much of this quantity can be matched to this bet
         self.__matched += qty_matched # Update this bet's matched stake
-
         return qty_matched
+
+    def reduce_stake(self, delta_stake: int) -> None:
+        self.__stake -= delta_stake
 
     def get_bettor_id(self) -> int:
         '''Returns the id of the agent who placed this bet.'''
@@ -62,7 +64,8 @@ class Back(Bet):
         self._bet_type = "Back"
 
     def get_winnings(self) -> int:
-        return self.get_odds() * self.get_matched()
+        '''Return winnings plus unmatched stake'''
+        return self.get_odds() * self.get_matched() // 100 + self.get_unmatched()
 
 class Lay(Bet):
     def __init__(self, bettor_id: int, event_id: int, odds: int, stake: int):
@@ -71,8 +74,8 @@ class Lay(Bet):
 
     def get_winnings(self) -> int:
         '''Return liability plus winnings'''
-        return self.get_odds() * self.get_stake() + self.get_matched()
+        return self.get_odds() * self.get_stake() // 100 + self.get_matched()
 
     def get_unmatched_liability(self) -> int:
-        return self.get_odds() * self.get_unmatched()
+        return self.get_odds() * self.get_unmatched() // 100
 

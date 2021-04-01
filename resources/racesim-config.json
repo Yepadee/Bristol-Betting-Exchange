@@ -1,6 +1,6 @@
 {
     "num_races" : 10000,
-    "num_steps" : 230,
+    "num_steps" : 115,
     "track_length" : 1000,
     "track_width" : 4,
     "clean_air_dist" : 5,
