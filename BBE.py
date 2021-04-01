@@ -78,6 +78,7 @@ if __name__ == "__main__":
 
     t: int = 0
     opinion_update_period: int = 10
+    actions_per_period: int = 100
     percent_complete: float = 0.0
     lob_view = exchange.get_lob_view()
     matched_bets = []
@@ -93,10 +94,11 @@ if __name__ == "__main__":
         race.step(opinion_update_period) # Allow 1 timestep to pass in the race
         percent_complete = race.get_percent_complete()
 
-        random.shuffle(bettor_list)
-        rdm_bettor: Bettor
-        for rdm_bettor in bettor_list:
-            new_bet: Bet = rdm_bettor.get_bet(lob_view) # Get their bet
+        #random.shuffle(bettor_list)
+        for i in range(actions_per_period):
+            rdm_bettor: Bettor = pick_random_bettor(bettor_list)
+
+            new_bet: Bet = rdm_bettor.get_bet(lob_view, t) # Get their bet
             lob_view = exchange.get_lob_view()
 
             if new_bet is not None: # If they want to post a new bet
@@ -116,7 +118,8 @@ if __name__ == "__main__":
                 for bettor in bettor_list: # 
                     bettor.on_bets_matched(lob_view, percent_complete, matched_bets)
 
-        t += opinion_update_period
+            t += 1
+        print(exchange)
 
     #print(exchange)
     for bettor in bettor_list:

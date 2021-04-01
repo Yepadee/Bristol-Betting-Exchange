@@ -44,22 +44,22 @@ class Bettor(object):
     def get_lays(self) -> list:
         return self.__lays
 
-    def _new_back(self, event_id: int, odds: int, stake: int) -> Back:
+    def _new_back(self, event_id: int, odds: int, stake: int, time: int) -> Back:
         '''Create a new back and add to bettors record of backs'''
 
         if stake > self.__balance:
             raise Exception("Bettor has insufficient funds for new back. Has £%.2f, needs £%.2f" % (self.__balance/100.0, stake/100.0))
 
-        back = Back(self.__id, event_id, odds, stake)
+        back = Back(self.__id, event_id, odds, stake, time)
         self.__backs.append(back)
         return back
 
-    def _new_lay(self, event_id: int, odds: int, stake: int) -> Lay:
+    def _new_lay(self, event_id: int, odds: int, stake: int, time: int) -> Lay:
         '''Create a new lay and add to bettors record of lays'''
         liability = stake * odds // 100
         if liability > self.__balance:
             raise Exception("Bettor has insufficient funds for new back. Has £%.2f, needs £%.2f" % (self.__balance/100.0, liability/100.0))
-        lay = Lay(self.__id, event_id, odds, stake)
+        lay = Lay(self.__id, event_id, odds, stake, time)
         self.__lays.append(lay)
         return lay
 
@@ -82,7 +82,7 @@ class Bettor(object):
             sum_refund += lay.get_unmatched_liability()
 
     # The following methods must be implemented in a new betting agent:
-    def get_bet(self, lob_view: dict) -> Bet:
+    def get_bet(self, lob_view: dict, time: int) -> Bet:
         '''
         Returns either None, a Back or a Lay.
         '''
@@ -113,7 +113,7 @@ class NaiveBettor(Bettor):
         super().__init__("NAIVE", id, balance, num_simulations)
         self.__last_event_probs: np.array(np.float32) = None
 
-    def get_bet(self, lob_view: dict) -> Bet:
+    def get_bet(self, lob_view: dict, time: int) -> Bet:
         if self.__last_event_probs is not None and self.get_balance() > 0:
             rdm = np.random.randint(0, 2)
             if rdm == 0:
@@ -123,7 +123,7 @@ class NaiveBettor(Bettor):
                     odds = round((1.0 / self.__last_event_probs[best_competetor]) * 100)
                     if odds == 100:
                         odds += 1
-                    return self._new_back(best_competetor + 1, odds, stake)
+                    return self._new_back(best_competetor + 1, odds, stake, time)
             else:
                 non_zero_probs = np.copy(self.__last_event_probs)
                 non_zero_probs[non_zero_probs == 0] = 1000
@@ -135,7 +135,7 @@ class NaiveBettor(Bettor):
                     max_stake = int(self.get_balance() / (odds / 100.0)) #TODO: fix max_stake exceeding balance
                     if max_stake > 200:
                         stake = np.random.randint(200, max_stake)
-                        return self._new_lay(worst_competetor + 1, odds, stake)
+                        return self._new_lay(worst_competetor + 1, odds, stake, time)
         
         return None
 

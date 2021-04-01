@@ -2,13 +2,13 @@ from time import time
 from printutils import apply_indent
 
 class Bet(object):
-    def __init__(self, bettor_id: int, event_id: int, odds: int, stake: int):
+    def __init__(self, bettor_id: int, event_id: int, odds: int, stake: int, time: int):
         self.__bettor_id = bettor_id
         self.__event_id = event_id
         self.__odds = odds
         self.__stake = stake
         self.__matched = 0
-        self.__time = time() # TODO
+        self.__time = time
 
     def match(self, quantity: int) -> int:
         '''
@@ -56,13 +56,13 @@ class Bet(object):
                (self._bet_type, self.__bettor_id, self.__event_id, self.__odds/100.0, self.__stake/100.0, self.__matched/100.0, self.__time)
 
 class Back(Bet):
-    def __init__(self, bettor_id: int, event_id: int, odds: int, stake: int):
-        super().__init__(bettor_id, event_id, odds, stake)
+    def __init__(self, bettor_id: int, event_id: int, odds: int, stake: int, time: int):
+        super().__init__(bettor_id, event_id, odds, stake, time)
         self._bet_type = "Back"
 
 class Lay(Bet):
-    def __init__(self, bettor_id: int, event_id: int, odds: int, stake: int):
-        super().__init__(bettor_id, event_id, odds, stake)
+    def __init__(self, bettor_id: int, event_id: int, odds: int, stake: int, time: int):
+        super().__init__(bettor_id, event_id, odds, stake, time)
         self._bet_type = "Lay"
 
     def get_unmatched_liability(self) -> int:
