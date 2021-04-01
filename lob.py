@@ -29,7 +29,7 @@ class MatchedBet(object):
         return self.__stake + self.get_backer_winnings() # Return layed stake plus liability
 
     def get_backer_winnings(self) -> int:
-        return self.odds * self.__stake // 100
+        return self.__odds * self.__stake // 100
 
     def __str__(self) -> str:
         return (

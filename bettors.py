@@ -48,7 +48,7 @@ class Bettor(object):
         '''Create a new back and add to bettors record of backs'''
 
         if stake > self.__balance:
-            raise Exception("Bettor has insufficient funds for new back. Has £%.2f, needs £%.2f" % self.__balance/100.0, stake/100.0)
+            raise Exception("Bettor has insufficient funds for new back. Has £%.2f, needs £%.2f" % (self.__balance/100.0, stake/100.0))
 
         back = Back(self.__id, event_id, odds, stake)
         self.__backs.append(back)
@@ -58,7 +58,7 @@ class Bettor(object):
         '''Create a new lay and add to bettors record of lays'''
         liability = stake * odds // 100
         if liability > self.__balance:
-            raise Exception("Bettor has insufficient funds for new back. Has £%.2f, needs £%.2f" % self.__balance/100.0, liability/100.0)
+            raise Exception("Bettor has insufficient funds for new back. Has £%.2f, needs £%.2f" % (self.__balance/100.0, liability/100.0))
         lay = Lay(self.__id, event_id, odds, stake)
         self.__lays.append(lay)
         return lay
@@ -120,14 +120,17 @@ class NaiveBettor(Bettor):
                     odds = round((1.0 / self.__last_event_probs[best_competetor]) * 100)
                     return self._new_back(best_competetor + 1, odds, stake)
             else:
-                worst_competetor = np.argmin(self.__last_event_probs)
+                non_zero_probs = np.copy(self.__last_event_probs)
+                non_zero_probs[non_zero_probs == 0] = 1000
+                worst_competetor = np.argmin(non_zero_probs)
+
                 prob = self.__last_event_probs[worst_competetor]
                 if prob <= 0:
                     prob = 0.001
                 odds = round((1.0 / prob) * 100)
-                max_liability = self.get_balance() // (odds // 100)
-                if max_liability > 1:
-                    stake = np.random.randint(1, max_liability)
+                max_stake = self.get_balance() // (odds // 100)
+                if max_stake > 1:
+                    stake = np.random.randint(1, max_stake)
                     return self._new_lay(worst_competetor + 1, odds, stake)
         
         return None
