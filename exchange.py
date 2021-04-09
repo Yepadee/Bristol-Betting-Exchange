@@ -1,9 +1,8 @@
 from lob import OrderBook
 from bets import *
-from bettors import BettingExchangeView
 
 
-class BettingExchange(BettingExchangeView):
+class BettingExchange(object):
     def __init__(self, n_events):
         # Construct empy LOB
         self.__lob = {

@@ -47,6 +47,9 @@ def distribute_winnings(bettors: dict, matched_bets: list, successful_event_id: 
         else:
             layer.add_funds(matched_bet.get_layer_winnings())
 
+def shift_bit_length(x):
+    return 1<<(x-1).bit_length()
+
 if __name__ == "__main__":
     '''Load racesim config'''
     track_params, competetor_params = load_racesim_params()
@@ -70,6 +73,7 @@ if __name__ == "__main__":
 
     '''Calculate total number of race simulations needed'''
     n_simulations: int = get_num_simulations(bettor_list)
+    n_simulations = shift_bit_length(n_simulations)
     print("num simulations: %d" % n_simulations)
 
     '''Create race simulation instances'''

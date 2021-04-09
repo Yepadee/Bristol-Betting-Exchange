@@ -7,19 +7,6 @@ import sys
 sys.path.append('../BBE-Racing-Sim/')
 from sim_output import plot_winners_freqs
 
-class BettingExchangeView(object):
-    def add_bet(self, bet: Bet) -> None:
-        raise Exception("add_bet undefined")
-
-    def cancel_bet(self, bet: Bet) -> None:
-        raise Exception("cancel_bet undefined")
-
-    def get_lob_view(self) -> dict:
-        raise Exception("get_lob_view undefined")
-
-    def get_n_events(self) -> int:
-        raise Exception("get_n_events undefined")
-
 class Bettor(object):
     def __init__(self, name: str, id: int, balance: int, num_simulations: int):
         self.__name: str = name
@@ -28,6 +15,7 @@ class Bettor(object):
         self.__num_simulations: int = num_simulations
         self.__backs: list = []
         self.__lays: list = []
+        self._last_event_probs: np.array(np.float32) = None
         
     def get_id(self) -> int:
         return self.__id
@@ -81,7 +69,7 @@ class Bettor(object):
             self.__balance += lay.get_unmatched_liability()
             sum_refund += lay.get_unmatched_liability()
 
-    # The following methods must be implemented in a new betting agent:
+    # The following methods should be implemented in a new betting agent:
     def get_bet(self, lob_view: dict, time: int) -> Bet:
         '''
         Returns either None, a Back or a Lay.
@@ -102,34 +90,45 @@ class Bettor(object):
         '''
         pass
 
+    def on_opinion_update(self, lob_view: dict, percent_complete: float, event_probs: np.array(np.float32)) -> None:
+        self._last_event_probs = event_probs
+
     def __str__(self) -> str:
         return '{name=%s, id=%d, balance=£%.2f, n_sims=%d, backs=%d, lays=%d}' % \
                (self.__name, self.__id, self.__balance/100.0, self.__num_simulations, len(self.__backs), len(self.__lays))
+
+class NoiseBettor(Bettor):
+    def __init__(self, id: int, balance: int, num_simulations: int, favorite_event_id: int):
+        super().__init__("NAIVE", id, balance, num_simulations)
+        self.__favorite_event_id = favorite_event_id
+        self.__has_bet = False
+
+    def get_bet(self, lob_view: dict, time: int) -> Bet:
+        pass
 
 class NaiveBettor(Bettor):
     '''A bettor who simply bets on who he thinks will win at the start'''
 
     def __init__(self, id: int, balance: int, num_simulations: int):
         super().__init__("NAIVE", id, balance, num_simulations)
-        self.__last_event_probs: np.array(np.float32) = None
 
     def get_bet(self, lob_view: dict, time: int) -> Bet:
-        if self.__last_event_probs is not None and self.get_balance() > 0:
+        if self._last_event_probs is not None and self.get_balance() > 0:
             rdm = np.random.randint(0, 2)
             if rdm == 0:
                 if self.get_balance() > 200:
                     stake = np.random.randint(200, self.get_balance() + 1)
-                    best_competetor = np.argmax(self.__last_event_probs)
-                    odds = round((1.0 / self.__last_event_probs[best_competetor]) * 100)
+                    best_competetor = np.argmax(self._last_event_probs)
+                    odds = round((1.0 / self._last_event_probs[best_competetor]) * 100)
                     if odds == 100:
                         odds += 1
                     return self._new_back(best_competetor + 1, odds, stake, time)
             else:
-                non_zero_probs = np.copy(self.__last_event_probs)
+                non_zero_probs = np.copy(self._last_event_probs)
                 non_zero_probs[non_zero_probs == 0] = 1000
                 worst_competetor = np.argmin(non_zero_probs)
 
-                prob = self.__last_event_probs[worst_competetor]
+                prob = self._last_event_probs[worst_competetor]
                 if prob < 0.99:
                     odds = round((1.0 / prob) * 100)
                     max_stake = int(self.get_balance() / (odds / 100.0)) #TODO: fix max_stake exceeding balance
@@ -138,11 +137,6 @@ class NaiveBettor(Bettor):
                         return self._new_lay(worst_competetor + 1, odds, stake, time)
         
         return None
-
-    def on_opinion_update(self, lob_view: dict, percent_complete: float, event_probs: np.array(np.float32)) -> None:
-        n_events = len(lob_view.keys())
-        self.__last_event_probs = event_probs
-        #plot_winners_freqs(n_events, event_probs * self.get_num_simulations(), 'output/%d/fig%s.png' % (percent_complete * 100, self.get_id()))
 
     def on_bets_matched(self, lob_view: dict, percent_complete: float, matched_bets: list) -> None:
         #print("respond: %d" % len(matched_bets))
