@@ -70,7 +70,7 @@ class Bettor(object):
             sum_refund += lay.get_unmatched_liability()
 
     # The following methods should be implemented in a new betting agent:
-    def get_bet(self, lob_view: dict, time: int) -> Bet:
+    def get_bet(self, lob_view: dict, percent_complete: float) -> Bet:
         '''
         Returns either None, a Back or a Lay.
         '''
@@ -103,8 +103,9 @@ class NoiseBettor(Bettor):
         self.__favorite_event_id = favorite_event_id
         self.__has_bet = False
 
-    def get_bet(self, lob_view: dict, time: int) -> Bet:
-        pass
+    def get_bet(self, lob_view: dict, percent_complete: float) -> Bet:
+        if self.get_balance() > 200:
+            pass
 
 class NaiveBettor(Bettor):
     '''A bettor who simply bets on who he thinks will win at the start'''
@@ -112,7 +113,7 @@ class NaiveBettor(Bettor):
     def __init__(self, id: int, balance: int, num_simulations: int):
         super().__init__("NAIVE", id, balance, num_simulations)
 
-    def get_bet(self, lob_view: dict, time: int) -> Bet:
+    def get_bet(self, lob_view: dict, percent_complete: float) -> Bet:
         if self._last_event_probs is not None and self.get_balance() > 0:
             rdm = np.random.randint(0, 2)
             if rdm == 0:
