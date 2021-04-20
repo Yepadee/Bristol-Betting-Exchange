@@ -126,7 +126,7 @@ class OrderBookHalf(object):
         qty_unmatched = new_bet_stake
         qty_matched = 0
 
-        better_odds: np.array(np.int32) = self._get_better_odds(odds)
+        better_odds: np.int32 = self._get_better_odds(odds)
 
         '''
         Go through each of the odds that are better than the odds

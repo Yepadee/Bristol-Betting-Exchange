@@ -15,7 +15,7 @@ class Bettor(object):
         self.__num_simulations: int = num_simulations
         self.__backs: list = []
         self.__lays: list = []
-        self._last_event_probs: np.array(np.float32) = None
+        self._previous_odds: np.int32 = None
         
     def get_id(self) -> int:
         return self.__id
@@ -76,7 +76,8 @@ class Bettor(object):
         '''
         pass
 
-    def on_opinion_update(self, lob_view: dict, percent_complete: float, event_probs: np.array(np.float32)) -> None:
+    def on_opinion_update(self, lob_view: dict, percent_complete: float, decimal_odds: np.float32) -> None:
+        self._previous_odds = decimal_odds
         '''
         Defines the actions the bettor should take in response
         to its opinion of the race outcome being updated.
@@ -89,9 +90,6 @@ class Bettor(object):
         to new bets being matched.
         '''
         pass
-
-    def on_opinion_update(self, lob_view: dict, percent_complete: float, event_probs: np.array(np.float32)) -> None:
-        self._last_event_probs = event_probs
 
     def __str__(self) -> str:
         return '{name=%s, id=%d, balance=£%.2f, n_sims=%d, backs=%d, lays=%d}' % \
@@ -114,28 +112,23 @@ class NaiveBettor(Bettor):
         super().__init__("NAIVE", id, balance, num_simulations)
 
     def get_bet(self, lob_view: dict, percent_complete: float) -> Bet:
-        if self._last_event_probs is not None and self.get_balance() > 0:
+        if self._previous_odds is not None and self.get_balance() > 0:
             rdm = np.random.randint(0, 2)
             if rdm == 0:
                 if self.get_balance() > 200:
                     stake = np.random.randint(200, self.get_balance() + 1)
-                    best_competetor = np.argmax(self._last_event_probs)
-                    odds = round((1.0 / self._last_event_probs[best_competetor]) * 100)
-                    if odds == 100:
-                        odds += 1
+                    best_competetor = np.argmin(self._previous_odds)
+                    odds = self._previous_odds[best_competetor]
+                    print(odds)
                     return self._new_back(best_competetor + 1, odds, stake, time)
             else:
-                non_zero_probs = np.copy(self._last_event_probs)
-                non_zero_probs[non_zero_probs == 0] = 1000
-                worst_competetor = np.argmin(non_zero_probs)
+                worst_competetor = np.random.randint(0,self._previous_odds.size)
 
-                prob = self._last_event_probs[worst_competetor]
-                if prob < 0.99:
-                    odds = round((1.0 / prob) * 100)
-                    max_stake = int(self.get_balance() / (odds / 100.0)) #TODO: fix max_stake exceeding balance
-                    if max_stake > 200:
-                        stake = np.random.randint(200, max_stake)
-                        return self._new_lay(worst_competetor + 1, odds, stake, time)
+                odds = self._previous_odds[worst_competetor]
+                max_stake = int(self.get_balance() / (odds / 100.0)) #TODO: fix max_stake exceeding balance
+                if max_stake > 200:
+                    stake = np.random.randint(200, max_stake)
+                    return self._new_lay(worst_competetor + 1, odds, stake, time)
         
         return None
 

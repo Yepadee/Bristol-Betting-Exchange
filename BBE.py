@@ -1,6 +1,7 @@
 from bets import *
 from bettors import *
 from exchange import BettingExchange
+from output_odds import plot_odds
 
 import random
 
@@ -18,22 +19,15 @@ def pick_random_bettor(bettors: list) -> Bettor:
 def get_num_simulations(bettors: list) -> int:
     return reduce((lambda acc, b: acc + b.get_num_simulations()), bettors, 0)
 
-def calculate_winner_probs(n_events: int, predicted_winners: np.array(np.int8)) -> np.array(np.float32):
-    winner_freqs = np.zeros(n_events)
-    for i in range(n_events):
-        event_id = i + 1
-        winner_freqs[i] = float(np.count_nonzero(predicted_winners == event_id))
-    return winner_freqs / predicted_winners.size
-
-def update_bettor_opinions(lob_view: dict, all_bettors: list, percent_complete: float, predicted_winners: np.array(np.int8)) -> None:
+def update_bettor_opinions(lob_view: dict, all_bettors: list, percent_complete: float, predicted_winners: np.int8) -> None:
     last_index = 0
     bettor: Bettor
     n_events = len(lob_view.keys())
     for bettor in all_bettors:
         num_sims = bettor.get_num_simulations()
         result_slice = predicted_winners[last_index : last_index + num_sims]
-        winner_probs = calculate_winner_probs(n_events, result_slice)
-        bettor.on_opinion_update(lob_view, percent_complete, winner_probs)
+        decimal_odds = calculate_decimal_odds(n_events, result_slice)
+        bettor.on_opinion_update(lob_view, percent_complete, decimal_odds)
         last_index += num_sims
 
 def distribute_winnings(bettors: dict, matched_bets: list, successful_event_id: int) -> None:
@@ -77,7 +71,7 @@ if __name__ == "__main__":
     race_simulations: RaceSimParallel = RaceSimParallel(n_simulations, track_params, competetor_params)
 
    
-    opinion_update_period: int = 1
+    opinion_update_period: int = 10
     actions_per_period: int = 10
     
     lob_view = exchange.get_lob_view()
@@ -86,8 +80,6 @@ if __name__ == "__main__":
     t: int = 0
     percent_complete: float = 0.0
 
-    all_odds = []
-
     while not race.is_finished():
         '''Get the current competetor positions'''
         competetor_positions = race.get_competetor_positions()
@@ -95,11 +87,6 @@ if __name__ == "__main__":
         '''Run all the simulations from these positions'''
         predicted_winners = race_simulations.simulate_races(competetor_positions)
         print("Simulations complete!")
-        n_events = exchange.get_n_events()
-        #plot_winners(n_events, predicted_winners, f'output/{t}.png')
-
-        odds = calculate_winner_probs(n_events, predicted_winners)
-        all_odds.append(odds)
 
         '''Give each bettor their alocated number of simulation results'''
         update_bettor_opinions(lob_view, bettor_list, percent_complete, predicted_winners)
