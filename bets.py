@@ -47,7 +47,7 @@ class Bet(object):
     def get_unmatched(self) -> int:
         return self.__stake - self.__matched
 
-    def get_time(self) -> float:
+    def get_time(self) -> int:
         '''Returns the time this bet was placed.'''
         return self.__time
 

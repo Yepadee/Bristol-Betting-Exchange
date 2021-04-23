@@ -32,6 +32,25 @@ class Bettor(object):
     def get_lays(self) -> list:
         return self.__lays
 
+    def get_bets(self) -> list:
+        all_bets = []
+        all_bets.extend(self.__backs)
+        all_bets.extend(self.__lays)
+        return all_bets
+
+    def cancel_bet(self, bet: Bet) -> None:
+        refund: int = 0
+        bet: Bet
+        if type(bet) is Back:
+            self.__backs.remove(bet)
+            refund = bet.get_unmatched()
+        else:
+            self.__lays.remove(bet)
+            refund = bet.get_unmatched_liability()
+
+        self.add_funds(refund)
+            
+
     def _new_back(self, event_id: int, odds: int, stake: int, time: int) -> Back:
         '''Create a new back and add to bettors record of backs'''
 
@@ -70,7 +89,7 @@ class Bettor(object):
             sum_refund += lay.get_unmatched_liability()
 
     # The following methods should be implemented in a new betting agent:
-    def get_bet(self, lob_view: dict, percent_complete: float) -> Bet:
+    def get_bet(self, lob_view: dict, percent_complete: float, time: int) -> Bet:
         '''
         Returns either None, a Back or a Lay.
         '''
@@ -101,7 +120,7 @@ class NoiseBettor(Bettor):
         self.__favorite_event_id = favorite_event_id
         self.__has_bet = False
 
-    def get_bet(self, lob_view: dict, percent_complete: float) -> Bet:
+    def get_bet(self, lob_view: dict, percent_complete: float, time: int) -> Bet:
         if self.get_balance() > 200:
             pass
 
@@ -111,7 +130,7 @@ class NaiveBettor(Bettor):
     def __init__(self, id: int, balance: int, num_simulations: int):
         super().__init__("NAIVE", id, balance, num_simulations)
 
-    def get_bet(self, lob_view: dict, percent_complete: float) -> Bet:
+    def get_bet(self, lob_view: dict, percent_complete: float, time: int) -> Bet:
         if self._previous_odds is not None and self.get_balance() > 0:
             rdm = np.random.randint(0, 2)
             if rdm == 0:
@@ -119,7 +138,6 @@ class NaiveBettor(Bettor):
                     stake = np.random.randint(200, self.get_balance() + 1)
                     best_competetor = np.argmin(self._previous_odds)
                     odds = self._previous_odds[best_competetor]
-                    print(odds)
                     return self._new_back(best_competetor + 1, odds, stake, time)
             else:
                 worst_competetor = np.random.randint(0,self._previous_odds.size)

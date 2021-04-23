@@ -56,7 +56,7 @@ if __name__ == "__main__":
     '''Add Bettors'''
     bettors = {}
     for i in range(20):
-        n_sims = 2 ** np.random.randint(2, 5)
+        n_sims = 2 ** np.random.randint(1, 5)
         bettors[i] = NaiveBettor(id=i, balance=10000, num_simulations=n_sims)
 
     bettor_list = list(bettors.values())
@@ -78,6 +78,7 @@ if __name__ == "__main__":
     matched_bets = []
 
     t: int = 0
+    bet_expire_time: int = 10
     percent_complete: float = 0.0
 
     while not race.is_finished():
@@ -99,8 +100,15 @@ if __name__ == "__main__":
             '''Select a random bettor'''
             rdm_bettor: Bettor = pick_random_bettor(bettor_list)
 
+            current_bets = rdm_bettor.get_bets()
+            current_bet: Bet
+            for current_bet in current_bets:
+                if ((t - current_bet.get_time()) > bet_expire_time and current_bet.get_unmatched() > 0):
+                    exchange.cancel_bet(current_bet)
+                    rdm_bettor.cancel_bet(current_bet)
+
             '''Get their bet'''
-            new_bet: Bet = rdm_bettor.get_bet(lob_view, percent_complete)
+            new_bet: Bet = rdm_bettor.get_bet(lob_view, percent_complete, t)
 
             '''Build an imutable view of the current state of the LOB'''
             lob_view = exchange.get_lob_view()

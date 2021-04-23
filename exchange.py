@@ -10,15 +10,13 @@ class BettingExchange(object):
         }
         self.__n_events = n_events
         self.__lob_view: dict = {}
-
-        self.__publish_lob()
         
     def __publish_lob(self) -> None:
         self.__lob_view = {
             event_id : self.__lob[event_id].get_view() for event_id in self.__lob.keys()
         }
 
-    def add_bet(self, bet: Bet, matched_bets: list) -> list:
+    def add_bet(self, bet: Bet, matched_bets: list) -> int:
         '''
         Add a new bet to the exchange.
         Fills 'matched_bets' with the resultant matches from
@@ -30,14 +28,17 @@ class BettingExchange(object):
             raise Exception("Event with id %d does not exist on the exchange!" % event_id)
         
         bet_cost = self.__lob[event_id].add_bet(bet, matched_bets)
-        self.__publish_lob()
         return bet_cost
 
-    def cancel_bet(self, bet: Bet) -> None:
-        pass
+    def cancel_bet(self, bet: Bet) -> int:
+        '''
+        Cancel a bet from the exchange.
+        '''
+        self.__lob[bet.get_event_id()].cancel_bet(bet)
 
     def get_lob_view(self) -> dict:
         '''Retrieve a view of the exchange's limit order book'''
+        self.__publish_lob()
         return self.__lob_view
 
     def get_n_events(self) -> int:

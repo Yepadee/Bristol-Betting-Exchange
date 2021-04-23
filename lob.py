@@ -43,8 +43,8 @@ class MatchedBet(object):
 
 class OrderBookHalf(object):
     def __init__(self):
-        self._total_stakes = {}
-        self.__bets = {}
+        self._total_stakes: dict = {}
+        self.__bets: dict = {}
 
     def add_bet(self, bet: Bet) -> None:
         '''Adds a new bet to the order book'''
@@ -57,6 +57,20 @@ class OrderBookHalf(object):
         else:
             self._total_stakes[odds] = unmatched
             self.__bets[odds] = [bet]
+
+    def cancel_bet(self, to_cancel: Bet):
+        unmatched: int = to_cancel.get_unmatched()
+        if unmatched == 0:
+            raise Exception("ERROR: Attempted to cancel a fully matched bet.")
+
+        odds: int = to_cancel.get_odds()
+        self._total_stakes[odds] -= unmatched
+        self.__bets[odds].remove(to_cancel)
+
+        if self._total_stakes[odds] == 0:
+            self._total_stakes.pop(odds)
+            self.__bets.pop(odds)
+        
 
     def __match_at_odds(self, bettor_id, odds, stake_to_match, matched_bets) -> int:
         '''
@@ -149,10 +163,10 @@ class OrderBookHalf(object):
     def _get_bet_cost(self, odds: int, stake: int) -> int:
         pass
 
-    def _get_ordered_odds(self) -> np.array(np.int32):
+    def _get_ordered_odds(self) -> np.int32:
         pass
 
-    def _get_better_odds(self, matching_odds: int) -> np.array(np.int32):
+    def _get_better_odds(self, matching_odds: int) -> np.int32:
         pass
 
     def _get_matched_bet(self, event_id: int, odds: int, stake: int, new_bettor_id: int, counter_party_id: int) -> MatchedBet:
@@ -173,12 +187,12 @@ class BackOrderBook(OrderBookHalf):
     def _get_bet_cost(self, odds: int, stake: int) -> int:
         return odds * stake // 100 - stake
 
-    def _get_ordered_odds(self) -> np.array(np.int32): 
+    def _get_ordered_odds(self) -> np.int32: 
         odds = np.array(list(self._total_stakes.keys()))
         odds.sort() # Lowest odds first
         return odds 
 
-    def _get_better_odds(self, matching_odds: int) -> np.array(np.int32):
+    def _get_better_odds(self, matching_odds: int) -> np.int32:
         ordered_odds = self._get_ordered_odds() 
         return ordered_odds[ordered_odds < matching_odds]
 
@@ -208,6 +222,17 @@ class OrderBook(object):
         self.__backs = BackOrderBook()
         self.__lays = LayOrderBook()
         self.__matched_bets = []
+
+    def cancel_bet(self, bet: Bet):
+        '''
+        Remove a bet from the lob.
+        '''
+
+        if type(bet) is Back:
+            self.__backs.cancel_bet(bet)
+        else:
+            bet: Lay
+            self.__lays.cancel_bet(bet)
 
     def add_bet(self, bet: Bet, matched_bets: list) -> int:
         '''
