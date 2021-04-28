@@ -1,5 +1,7 @@
 from bets import *
-from bettors import *
+from bettors.bettors import *
+from bettors.naive_bettor import *
+
 from exchange import BettingExchange
 from output_odds import plot_odds
 
@@ -85,6 +87,7 @@ if __name__ == "__main__":
         '''Get the current competetor positions'''
         competetor_positions = race.get_competetor_positions()
         print("Running simulations...")
+
         '''Run all the simulations from these positions'''
         predicted_winners = race_simulations.simulate_races(competetor_positions)
         print("Simulations complete!")
@@ -99,13 +102,6 @@ if __name__ == "__main__":
         for i in range(actions_per_period):
             '''Select a random bettor'''
             rdm_bettor: Bettor = pick_random_bettor(bettor_list)
-
-            current_bets = rdm_bettor.get_bets()
-            current_bet: Bet
-            for current_bet in current_bets:
-                if ((t - current_bet.get_time()) > bet_expire_time and current_bet.get_unmatched() > 0):
-                    exchange.cancel_bet(current_bet)
-                    rdm_bettor.cancel_bet(current_bet)
 
             '''Get their bet'''
             new_bet: Bet = rdm_bettor.get_bet(lob_view, percent_complete, t)
@@ -135,12 +131,25 @@ if __name__ == "__main__":
                 matched_bets.extend(matched_this_bet)
 
                 '''Notify each bettor of the newly matched bets'''
-                bettor: Bettor
-                for bettor in bettor_list:
-                    bettor.on_bets_matched(lob_view, percent_complete, matched_bets)
+                matched_bet: MatchedBet
+                for matched_bet in matched_this_bet:
+                    b1Id: int = matched_bet.get_backer_id()
+                    b2Id: int = matched_bet.get_layer_id()
+                    b1: Bettor = bettors[b1Id]
+                    b2: Bettor = bettors[b2Id]
+                    b1.bookkeep(matched_bet)
+                    b2.bookkeep(matched_bet)
 
             '''Increment time'''
             t += 1
+
+            for bettor in bettor_list:
+                current_bets = bettor.get_bets()
+                current_bet: Bet
+                for current_bet in current_bets:
+                    if ((t - current_bet.get_time()) > bet_expire_time and current_bet.get_unmatched() > 0):
+                        exchange.cancel_bet(current_bet)
+                        bettor.cancel_bet(current_bet)
 
     '''Cancel all the bettors unmatched bets'''
     for bettor in bettor_list:
@@ -156,8 +165,11 @@ if __name__ == "__main__":
         sum_bal += b.get_balance()
         print(b)
 
-    for mb in matched_bets:
-        print(mb)   
+    for b in bettor_list:
+        print("")
+        print(b)
+        for mb in b.get_matched_bets():
+            print(mb)   
 
     print(sum_bal)
     print(race.get_winner())

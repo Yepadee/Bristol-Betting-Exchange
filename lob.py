@@ -3,12 +3,13 @@ from printutils import apply_indent
 import numpy as np
 
 class MatchedBet(object):
-    def __init__(self, event_id: int, odds: int, stake: int, backer_id: int, layer_id: int):
+    def __init__(self, event_id: int, odds: int, stake: int, backer_id: int, layer_id: int, time: int):
         self.__event_id = event_id
         self.__odds = odds
         self.__stake = stake
         self.__backer_id = backer_id
         self.__layer_id = layer_id
+        self.__time = time
 
     def get_event_id(self) -> int:
         return self.__event_id
@@ -25,6 +26,9 @@ class MatchedBet(object):
     def get_layer_id(self) -> int:
         return self.__layer_id
 
+    def get_time(self) -> int:
+        return self.__time
+
     def get_layer_winnings(self) -> int:
         return self.get_backer_winnings() # Return layed stake plus liability
 
@@ -37,8 +41,9 @@ class MatchedBet(object):
             'odds: %.2f, '
             'stake: £%.2f, '
             'backer_id: %d, '
-            'layer_id: %d}'
-        ) % (self.__event_id, self.__odds / 100.0, self.__stake / 100.0, self.__backer_id, self.__layer_id)
+            'layer_id: %d, '
+            'time: %d}'
+        ) % (self.__event_id, self.__odds / 100.0, self.__stake / 100.0, self.__backer_id, self.__layer_id, self.__time)
 
 
 class OrderBookHalf(object):
@@ -72,7 +77,7 @@ class OrderBookHalf(object):
             self.__bets.pop(odds)
         
 
-    def __match_at_odds(self, bettor_id, odds, stake_to_match, matched_bets) -> int:
+    def __match_at_odds(self, bettor_id: int, odds: int, stake_to_match: int, time: int, matched_bets: list) -> int:
         '''
         Match a stake at a specific odds. Returns how much of
         the requested stake could be matched
@@ -86,7 +91,7 @@ class OrderBookHalf(object):
             bet: Bet = bets[index] # Retrieve bets in order of best odds first
             
             qty_matched = bet.match(qty_unmatched) # Match the quantity to this bet and retrieve how much was successfully matched
-            matched_bets.append(self._get_matched_bet(bet.get_event_id(), odds, qty_matched, bettor_id, bet.get_bettor_id())) # Add record of how much was matched
+            matched_bets.append(self._get_matched_bet(bet.get_event_id(), odds, qty_matched, bettor_id, bet.get_bettor_id(), time)) # Add record of how much was matched
 
             qty_unmatched -= qty_matched # Update how much stake is left that we need to match
             total_matched += qty_matched
@@ -115,9 +120,11 @@ class OrderBookHalf(object):
         bettor_id = new_bet.get_bettor_id()
         odds = new_bet.get_odds()
         new_bet_stake = new_bet.get_stake()
+        time = new_bet.get_time()
+
         qty_unmatched = new_bet_stake
         if odds in self.__bets:
-            qty_matched = self.__match_at_odds(bettor_id, odds, new_bet_stake, matched_bets)
+            qty_matched = self.__match_at_odds(bettor_id, odds, new_bet_stake, time, matched_bets)
             qty_unmatched -= qty_matched
             new_bet.match(qty_matched) # Match the original bet with how much we were able to successfully match with bets at the requested odds
 
@@ -137,6 +144,8 @@ class OrderBookHalf(object):
         bettor_id = new_bet.get_bettor_id()
         odds = new_bet.get_odds()
         new_bet_stake = new_bet.get_stake()
+        time = new_bet.get_time()
+
         qty_unmatched = new_bet_stake
         qty_matched = 0
 
@@ -150,7 +159,7 @@ class OrderBookHalf(object):
         bet_cost = 0
         while qty_unmatched > 0 and index < len(better_odds):
             b_odds = better_odds[index]
-            matched_at_odds = self.__match_at_odds(bettor_id, b_odds, qty_unmatched, matched_bets)
+            matched_at_odds = self.__match_at_odds(bettor_id, b_odds, qty_unmatched, time, matched_bets)
             qty_unmatched -= matched_at_odds
             bet_cost += self._get_bet_cost(b_odds, matched_at_odds)
             index += 1
@@ -169,7 +178,7 @@ class OrderBookHalf(object):
     def _get_better_odds(self, matching_odds: int) -> np.int32:
         pass
 
-    def _get_matched_bet(self, event_id: int, odds: int, stake: int, new_bettor_id: int, counter_party_id: int) -> MatchedBet:
+    def _get_matched_bet(self, event_id: int, odds: int, stake: int, new_bettor_id: int, counter_party_id: int, time: int) -> MatchedBet:
         pass
 
     def get_view(self) -> dict:
@@ -196,8 +205,8 @@ class BackOrderBook(OrderBookHalf):
         ordered_odds = self._get_ordered_odds() 
         return ordered_odds[ordered_odds < matching_odds]
 
-    def _get_matched_bet(self, event_id: int, odds: int, stake: int, new_bettor_id: int, counter_party_id: int) -> MatchedBet:
-        return MatchedBet(event_id=event_id, odds=odds, stake=stake, backer_id=counter_party_id, layer_id=new_bettor_id)
+    def _get_matched_bet(self, event_id: int, odds: int, stake: int, new_bettor_id: int, counter_party_id: int, time: int) -> MatchedBet:
+        return MatchedBet(event_id=event_id, odds=odds, stake=stake, backer_id=counter_party_id, layer_id=new_bettor_id, time=time)
 
 class LayOrderBook(OrderBookHalf):
     def _get_bet_cost(self, odds: int, stake: int) -> int:
@@ -212,8 +221,8 @@ class LayOrderBook(OrderBookHalf):
         ordered_odds = self._get_ordered_odds() 
         return ordered_odds[ordered_odds > matching_odds]
 
-    def _get_matched_bet(self, event_id: int, odds: int, stake: int, new_bettor_id: int, counter_party_id: int) -> MatchedBet:
-        return MatchedBet(event_id=event_id, odds=odds, stake=stake, backer_id=new_bettor_id, layer_id=counter_party_id)    
+    def _get_matched_bet(self, event_id: int, odds: int, stake: int, new_bettor_id: int, counter_party_id: int, time: int) -> MatchedBet:
+        return MatchedBet(event_id=event_id, odds=odds, stake=stake, backer_id=new_bettor_id, layer_id=counter_party_id, time=time)    
 
 
 class OrderBook(object):

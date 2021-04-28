@@ -1,5 +1,6 @@
 from bets import *
-from bettors import *
+from bettors.bettors import *
+
 from exchange import BettingExchange
 from output_odds import plot_odds
 
