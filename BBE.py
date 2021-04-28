@@ -77,9 +77,9 @@ if __name__ == "__main__":
         n_sims = 2 ** np.random.randint(1, 5)
         bettors[i] = NaiveBettor(id=i, balance=10000, num_simulations=n_sims)
 
-    for i in range(20, 30):
+    for i in range(20, 23):
         n_sims = 2 ** np.random.randint(1, 5)
-        bettors[i] = BackToLayBettor(id=i, balance=10000, num_simulations=n_sims)
+        bettors[i] = BackToLayBettor(id=i, balance=10000, num_simulations=32)
 
     bettor_list = list(bettors.values())
     n_bettors = len(bettor_list)
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     matched_bets = []
 
     t: int = 0
-    bet_expire_time: int = 20
+    bet_expire_time: int = 10
     percent_complete: float = 0.0
 
     while not race.is_finished():

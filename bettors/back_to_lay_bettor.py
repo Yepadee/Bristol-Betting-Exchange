@@ -17,24 +17,21 @@ class BackToLayBettor(Bettor):
         Returns the id of the event that is most likely to see
         it's odds decrease based on the bettor's opinion
         '''
-        biggest_diff = 1 # We want at least some difference (hence why not 0)
+        biggest_diff = 1 # We want at least some difference (hence why it is not 0)
         best_event = None
 
         for event_id in lob_view:
             '''Get my predicted odds for this event'''
             predicted_odds = self._previous_odds[event_id-1]
-
-            '''
-            Assume an event with this high odds will never win
-            therfore their odds are very unlikely to decrease
-            '''
-            if predicted_odds > 500:
-                continue
             
             '''Get the best available odds to back for this event from the lob'''
             lay_odds = lob_view[event_id]['lays']['odds']
             if len(lay_odds) > 0:
                 best_lay = lay_odds[0]
+                print("id: ", event_id)
+                print("bl: ", best_lay)
+                print("mo: ", predicted_odds)
+                print("")
                 diff = best_lay - predicted_odds
                 if diff > biggest_diff:
                     biggest_diff = diff
@@ -47,9 +44,9 @@ class BackToLayBettor(Bettor):
         return lay_stake
 
     def get_bet(self, lob_view: dict, percent_complete: float, time: int) -> Bet:
+        print("time: ", time)
         new_bet = None
         max_stake = self.get_balance() // 4 # Only alocate a quarter of balance for backing 
-
         if self._previous_odds is not None and self.get_balance() > 0:
             if self.__state == 'backing':
                 '''
@@ -57,6 +54,7 @@ class BackToLayBettor(Bettor):
                 Find a competetor with a lay bet available that is higher than our predicted odds :)
                 '''
                 best_event_id = self.__get_underestimated_event(lob_view)
+
                 if best_event_id is not None:
                     available_stake = lob_view[best_event_id]['lays']['stakes'][0]
                     odds = lob_view[best_event_id]['lays']['odds'][0]
