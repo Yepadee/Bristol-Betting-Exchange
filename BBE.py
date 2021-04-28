@@ -1,9 +1,10 @@
 from bets import *
 from bettors.bettors import *
 from bettors.naive_bettor import *
+from bettors.back_to_lay_bettor import *
 
 from exchange import BettingExchange
-from output_odds import plot_odds
+from output_odds import plot_odds, plot_positions
 
 import random
 
@@ -47,6 +48,21 @@ def distribute_winnings(bettors: dict, matched_bets: list, successful_event_id: 
 def shift_bit_length(x):
     return 1<<(x-1).bit_length()
 
+def get_next_bet(bettor_list: list, lob_view: dict, percent_complete: float, t: int) -> Bet:
+    n_bettors = len(bettor_list)
+    i: int = 0
+    new_bet = None
+    bettor: Bettor = None
+    while i < n_bettors and new_bet is None:
+        '''Select a random bettor'''
+        bettor = pick_random_bettor(bettor_list)
+
+        '''Get their bet'''
+        new_bet: Bet = bettor.get_bet(lob_view, percent_complete, t)
+        i+= 1
+
+    return bettor, new_bet
+
 if __name__ == "__main__":
     '''Load racesim config'''
     track_params, competetor_params = load_racesim_params()
@@ -57,11 +73,16 @@ if __name__ == "__main__":
 
     '''Add Bettors'''
     bettors = {}
-    for i in range(20):
+    for i in range(10):
         n_sims = 2 ** np.random.randint(1, 5)
         bettors[i] = NaiveBettor(id=i, balance=10000, num_simulations=n_sims)
 
+    for i in range(10, 15):
+        n_sims = 2 ** np.random.randint(1, 5)
+        bettors[i] = BackToLayBettor(id=i, balance=10000, num_simulations=n_sims)
+
     bettor_list = list(bettors.values())
+    n_bettors = len(bettor_list)
 
     '''Calculate total number of race simulations needed'''
     n_simulations: int = get_num_simulations(bettor_list)
@@ -72,6 +93,8 @@ if __name__ == "__main__":
     race: RaceSimSerial = RaceSimSerial(track_params, competetor_params)
     race_simulations: RaceSimParallel = RaceSimParallel(n_simulations, track_params, competetor_params)
 
+    all_positions = []
+    all_odds = []
    
     opinion_update_period: int = 10
     actions_per_period: int = 10
@@ -86,11 +109,15 @@ if __name__ == "__main__":
     while not race.is_finished():
         '''Get the current competetor positions'''
         competetor_positions = race.get_competetor_positions()
+        all_positions.append(competetor_positions)
         print("Running simulations...")
 
         '''Run all the simulations from these positions'''
         predicted_winners = race_simulations.simulate_races(competetor_positions)
         print("Simulations complete!")
+
+        odds = calculate_decimal_odds(n_competetors, predicted_winners)
+        all_odds.append(odds)
 
         '''Give each bettor their alocated number of simulation results'''
         update_bettor_opinions(lob_view, bettor_list, percent_complete, predicted_winners)
@@ -100,14 +127,8 @@ if __name__ == "__main__":
         percent_complete = race.get_percent_complete()
 
         for i in range(actions_per_period):
-            '''Select a random bettor'''
-            rdm_bettor: Bettor = pick_random_bettor(bettor_list)
-
-            '''Get their bet'''
-            new_bet: Bet = rdm_bettor.get_bet(lob_view, percent_complete, t)
-
-            '''Build an imutable view of the current state of the LOB'''
-            lob_view = exchange.get_lob_view()
+            '''Get a bet from a random bettor'''
+            rdm_bettor, new_bet = get_next_bet(bettor_list, lob_view, percent_complete, t)
 
             '''If they want to post a new bet then...'''
             if new_bet is not None:
@@ -118,6 +139,9 @@ if __name__ == "__main__":
                 matched with (if any) and the cost of placing the bet
                 '''
                 bet_cost = exchange.add_bet(new_bet, matched_this_bet)
+
+                '''Update the imutable view of the current state of the LOB'''
+                lob_view = exchange.get_lob_view()
 
                 '''
                 Charge the bettor the cost of the bet.
@@ -151,7 +175,7 @@ if __name__ == "__main__":
                         exchange.cancel_bet(current_bet)
                         bettor.cancel_bet(current_bet)
 
-    '''Cancel all the bettors unmatched bets'''
+    '''Refund money to bettors from all of their unmatched bets'''
     for bettor in bettor_list:
         bettor.cancel_unmatched()
 
@@ -173,3 +197,9 @@ if __name__ == "__main__":
 
     print(sum_bal)
     print(race.get_winner())
+
+all_positions = np.array(all_positions)
+all_odds = np.array(all_odds)
+
+plot_odds(n_competetors, all_odds, "output/odds")
+plot_positions(n_competetors, all_positions, "output/positions-odds")

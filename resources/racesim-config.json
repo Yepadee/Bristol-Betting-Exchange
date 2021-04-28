@@ -7,7 +7,7 @@
   "max_condition_value" : 10,
   "conditions" : [7, 5, 6],
   "competetors" : {
-    "quantity" : 20,
+    "quantity" : 3,
     "preferences" : [
       [7, 5, 8],
       [5, 6, 3],

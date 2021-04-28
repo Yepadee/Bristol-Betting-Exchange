@@ -272,12 +272,10 @@ class OrderBook(object):
     def get_view(self) -> dict:
         return {
             'backs' : self.__backs.get_view(),
-            'lays' : self.__lays.get_view(),
-            'matched_bets' : self.__matched_bets
+            'lays' : self.__lays.get_view()
         }
 
     def __str__(self) -> str:
-        indent = 0
         return (
             f'event_id={self.__event_id},\n'
             f'backs={{{str(self.__backs)}}}\n'

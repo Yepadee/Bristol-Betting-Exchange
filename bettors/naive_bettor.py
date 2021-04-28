@@ -17,16 +17,10 @@ class NaiveBettor(Bettor):
                     best_competetor = np.argmin(self._previous_odds)
                     odds = self._previous_odds[best_competetor]
 
-                    if odds <= 100:
-                        odds += 1
-
                     return self._new_back(best_competetor + 1, odds, stake, time)
             else:
                 worst_competetor = np.random.randint(0, self._previous_odds.size)
                 odds = self._previous_odds[worst_competetor]
-
-                if odds <= 100:
-                    odds += 1
 
                 max_stake = self._get_max_lay_stake(odds)
                 if max_stake > 200:
