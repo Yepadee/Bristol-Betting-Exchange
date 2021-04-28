@@ -7,8 +7,10 @@ class Bet(object):
         self.__event_id = event_id
         self.__odds = odds
         self.__stake = stake
+        self.__original_stake = stake
         self.__matched = 0
         self.__time = time
+        self.__cancelled = False
 
     def match(self, quantity: int) -> int:
         '''
@@ -40,6 +42,9 @@ class Bet(object):
         '''Returns the stake of this bet.'''
         return self.__stake
 
+    def get_original_stake(self) -> int:
+        return self.__original_stake
+
     def get_matched(self) -> int:
         '''Returns how much of this bet has been matched.'''
         return self.__matched
@@ -51,9 +56,15 @@ class Bet(object):
         '''Returns the time this bet was placed.'''
         return self.__time
 
+    def cancel(self) -> None:
+        self.__cancelled = True
+
+    def is_cancelled(self) -> bool:
+        return self.__cancelled
+
     def __str__(self) -> str:
-        return '{bet_type=%s, bettor_id=%d, event_id=%d, odds=%.2f, stake=£%.2f, matched=£%.2f time=%f}' % \
-               (self._bet_type, self.__bettor_id, self.__event_id, self.__odds/100.0, self.__stake/100.0, self.__matched/100.0, self.__time)
+        return '{bet_type=%s, bettor_id=%d, event_id=%d, odds=%.2f, stake=£%.2f, matched=£%.2f, time=%f, cancelled=%d}' % \
+               (self._bet_type, self.__bettor_id, self.__event_id, self.__odds/100.0, self.__stake/100.0, self.__matched/100.0, self.__time, self.__cancelled)
 
 class Back(Bet):
     def __init__(self, bettor_id: int, event_id: int, odds: int, stake: int, time: int):

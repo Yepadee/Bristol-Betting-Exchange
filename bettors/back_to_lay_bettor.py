@@ -79,7 +79,7 @@ class BackToLayBettor(Bettor):
                         bet_stake = self.__calculate_lay_stake(lowest_odds)
                         if bet_stake <= self._get_max_lay_stake(lowest_odds):
                             new_bet = self._new_lay(event_id=self.__backed_event_id, odds=lowest_odds, stake=bet_stake, time=time)
-
+                            self.__state = 'done'
 
         return new_bet
 

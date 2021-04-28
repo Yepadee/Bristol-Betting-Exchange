@@ -73,11 +73,11 @@ if __name__ == "__main__":
 
     '''Add Bettors'''
     bettors = {}
-    for i in range(10):
+    for i in range(20):
         n_sims = 2 ** np.random.randint(1, 5)
         bettors[i] = NaiveBettor(id=i, balance=10000, num_simulations=n_sims)
 
-    for i in range(10, 15):
+    for i in range(20, 30):
         n_sims = 2 ** np.random.randint(1, 5)
         bettors[i] = BackToLayBettor(id=i, balance=10000, num_simulations=n_sims)
 
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     matched_bets = []
 
     t: int = 0
-    bet_expire_time: int = 10
+    bet_expire_time: int = 20
     percent_complete: float = 0.0
 
     while not race.is_finished():
@@ -168,11 +168,16 @@ if __name__ == "__main__":
             t += 1
 
             for bettor in bettor_list:
-                current_bets = bettor.get_bets()
+                current_bets = bettor.get_active_bets()
                 current_bet: Bet
                 for current_bet in current_bets:
-                    if ((t - current_bet.get_time()) > bet_expire_time and current_bet.get_unmatched() > 0):
+                    if ((t - current_bet.get_time()) > bet_expire_time and
+                        current_bet.get_unmatched() > 0 and
+                        not current_bet.is_cancelled()
+                    ):
                         exchange.cancel_bet(current_bet)
+                        current_bet.cancel()
+                        print(current_bet)
                         bettor.cancel_bet(current_bet)
 
     '''Refund money to bettors from all of their unmatched bets'''
@@ -189,11 +194,11 @@ if __name__ == "__main__":
         sum_bal += b.get_balance()
         print(b)
 
-    for b in bettor_list:
-        print("")
-        print(b)
-        for mb in b.get_matched_bets():
-            print(mb)   
+    # for b in bettor_list:
+    #     print("")
+    #     print(b)
+    #     for mb in b.get_matched_bets():
+    #         print(mb)   
 
     print(sum_bal)
     print(race.get_winner())

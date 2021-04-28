@@ -15,6 +15,7 @@ class Bettor(object):
         self.__num_simulations: int = num_simulations
         self.__backs: list = []
         self.__lays: list = []
+        self.__current_bets: list = []
         self.__matched_bets: list = []
         self._previous_odds: np.int32 = None
         
@@ -33,11 +34,8 @@ class Bettor(object):
     def get_lays(self) -> list:
         return self.__lays
 
-    def get_bets(self) -> list:
-        all_bets = []
-        all_bets.extend(self.__backs)
-        all_bets.extend(self.__lays)
-        return all_bets
+    def get_active_bets(self) -> list:
+        return self.__current_bets
 
     def get_matched_bets(self) -> list:
         return self.__matched_bets
@@ -45,11 +43,10 @@ class Bettor(object):
     def cancel_bet(self, bet: Bet) -> None:
         refund: int = 0
         bet: Bet
+        self.__current_bets.remove(bet)
         if type(bet) is Back:
-            self.__backs.remove(bet)
             refund = bet.get_unmatched()
         else:
-            self.__lays.remove(bet)
             refund = bet.get_unmatched_liability()
 
         self.add_funds(refund)

@@ -166,7 +166,7 @@ class OrderBookHalf(object):
 
         qty_matched = new_bet_stake - qty_unmatched
         new_bet.reduce_stake(qty_matched) # Update stake since some of the stake has now been filled by better odds
-        bet_cost += self._get_bet_cost(odds, new_bet.get_unmatched())
+        bet_cost += self._get_bet_cost(odds, qty_unmatched)
         return bet_cost
 
     def _get_bet_cost(self, odds: int, stake: int) -> int:
