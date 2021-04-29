@@ -4,7 +4,7 @@ from bettors.naive_bettor import *
 from bettors.back_to_lay_bettor import *
 
 from exchange import BettingExchange
-from output_odds import plot_odds, plot_positions
+from output_bets import plot_bets
 
 import random
 
@@ -13,6 +13,7 @@ sys.path.append('../BBE-Racing-Sim/')
 
 from racesim import *
 from sim_output import plot_winners
+from output_odds import plot_odds, plot_positions
 
 from functools import reduce
 
@@ -204,5 +205,6 @@ if __name__ == "__main__":
 all_positions = np.array(all_positions)
 all_odds = np.array(all_odds)
 
-plot_odds(n_competetors, all_odds, "output/odds")
-plot_positions(n_competetors, all_positions, "output/positions-odds")
+plot_odds(n_competetors, actions_per_period, all_odds, "output/odds")
+plot_positions(n_competetors, actions_per_period, all_positions, "output/positions-odds")
+plot_bets(n_competetors, matched_bets, "output/market-odds")

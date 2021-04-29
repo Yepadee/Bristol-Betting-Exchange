@@ -29,16 +29,16 @@ class BackToLayBettor(Bettor):
             if len(lay_odds) > 0:
                 best_lay = lay_odds[0]
                 diff = best_lay - predicted_odds
-                print("")
-                print(event_id)
-                print(best_lay)
-                print(predicted_odds)
-                print(diff)
+                # print("")
+                # print(event_id)
+                # print(best_lay)
+                # print(predicted_odds)
+                # print(diff)
                 if diff > biggest_diff:
                     biggest_diff = diff
                     best_event = event_id
-        print("best_event: ", best_event)
-        print("")
+        # print("best_event: ", best_event)
+        # print("")
         return best_event
 
     def __calculate_lay_stake(self, lay_odds) -> int:

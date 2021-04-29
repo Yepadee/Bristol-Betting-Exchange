@@ -9,6 +9,9 @@ def plot_bets(n_events: int, matched_bets: list, fig_path: str) -> None:
     competetor_odds = {}
     competetor_times = {}
 
+    cm = plt.get_cmap('gist_rainbow')
+    colours = [cm(1.*i/n_events) for i in range(n_events)]
+
     for event_id in range(1, n_events + 1):
         matched_bet: MatchedBet
         for matched_bet in matched_bets:
@@ -17,16 +20,13 @@ def plot_bets(n_events: int, matched_bets: list, fig_path: str) -> None:
                     competetor_odds[event_id] = []
                     competetor_times[event_id] = []
 
-                competetor_odds[event_id].append(matched_bet.get_odds())
+                competetor_odds[event_id].append(matched_bet.get_odds()/100.0)
                 competetor_times[event_id].append(matched_bet.get_time())
-                
-    xs: np.int32 = np.arange(steps)
 
-    cm = plt.get_cmap('gist_rainbow')
-    ax.set_prop_cycle(color=[cm(1.*i/n_competetors) for i in range(n_competetors)])
-    ax.step(xs, odds/100.0)
-    ax.set_ylim([1,20])
-    ax.legend(np.arange(1, n_competetors + 1), title='Horse', bbox_to_anchor=(1.00, 1), loc='upper left', fontsize='x-small')
+    for event_id in competetor_odds.keys():
+        ax.scatter(competetor_times[event_id], competetor_odds[event_id], color=colours[event_id-1])
+
+    ax.legend(list(competetor_odds.keys()), title='Horse', bbox_to_anchor=(1.00, 1), loc='upper left', fontsize='x-small')
     
     ax.set_ylabel('Decimal Odds')
     ax.set_xlabel('Time/s')
