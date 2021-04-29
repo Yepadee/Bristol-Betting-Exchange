@@ -1,18 +1,18 @@
 from .bettors import *
 
-class BackToLayBettor(Bettor):
+class LayToBackBettor(Bettor):
     '''
-    A bettor who attempts the back to lay strategy
-    by first placing a back bet, then placing a lay bet at lower odds.
+    A bettor who attempts the lay to back strategy
+    by first placing a lay bet, then placing a back bet at higher odds.
     '''
     def __init__(self, id: int, balance: int, num_simulations: int):
         super().__init__("BTL", id, balance, num_simulations)
         self.__state = 'backing'
-        self.__backed_event_id = None
-        self.__backed_odds = None
-        self.__backed_stake = None
+        self.__layed_event_id = None
+        self.__layed_odds = None
+        self.__layed_stake = None
 
-    def __get_underestimated_event(self, lob_view: dict) -> int:
+    def __get_overestimated_event(self, lob_view: dict) -> int:
         '''
         Returns the id of the event that is most likely to see
         it's odds decrease based on the bettor's opinion
@@ -25,20 +25,14 @@ class BackToLayBettor(Bettor):
             predicted_odds = self._previous_odds[event_id-1]
             
             '''Get the best available odds to back for this event from the lob'''
-            lay_odds = lob_view[event_id]['lays']['odds']
-            if len(lay_odds) > 0:
-                best_lay = lay_odds[0]
-                diff = best_lay - predicted_odds
-                print("")
-                print(event_id)
-                print(best_lay)
-                print(predicted_odds)
-                print(diff)
-                if diff > biggest_diff:
+            back_odds = lob_view[event_id]['backs']['odds']
+            if len(back_odds) > 0:
+                best_back = back_odds[0]
+                diff = predicted_odds - best_back
+                if diff >= biggest_diff:
                     biggest_diff = diff
                     best_event = event_id
-        print("best_event: ", best_event)
-        print("")
+
         return best_event
 
     def __calculate_lay_stake(self, lay_odds) -> int:

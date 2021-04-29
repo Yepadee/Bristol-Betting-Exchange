@@ -69,8 +69,9 @@ class OrderBookHalf(object):
             raise Exception("ERROR: Attempted to cancel a fully matched bet.")
 
         odds: int = to_cancel.get_odds()
-        self._total_stakes[odds] -= unmatched
         self.__bets[odds].remove(to_cancel)
+        self._total_stakes[odds] -= unmatched
+        
 
         if self._total_stakes[odds] == 0:
             self._total_stakes.pop(odds)

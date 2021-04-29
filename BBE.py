@@ -73,13 +73,13 @@ if __name__ == "__main__":
 
     '''Add Bettors'''
     bettors = {}
-    for i in range(20):
-        n_sims = 2 ** np.random.randint(1, 5)
+    for i in range(50):
+        n_sims = 2 ** np.random.randint(1, 8)
         bettors[i] = NaiveBettor(id=i, balance=10000, num_simulations=n_sims)
 
-    for i in range(20, 23):
-        n_sims = 2 ** np.random.randint(1, 5)
-        bettors[i] = BackToLayBettor(id=i, balance=10000, num_simulations=32)
+    for i in range(50, 52):
+        n_sims = 2 ** np.random.randint(1, 8)
+        bettors[i] = BackToLayBettor(id=i, balance=10000, num_simulations=n_sims)
 
     bettor_list = list(bettors.values())
     n_bettors = len(bettor_list)
@@ -128,16 +128,26 @@ if __name__ == "__main__":
 
         for i in range(actions_per_period):
             '''Get a bet from a random bettor'''
+            rdm_bettor: Bettor
+            new_bet: Bet
             rdm_bettor, new_bet = get_next_bet(bettor_list, lob_view, percent_complete, t)
 
             '''If they want to post a new bet then...'''
             if new_bet is not None:
+                '''Cancel all currently held bets'''
+                active_bets = rdm_bettor.get_active_bets()
+                active_bet: Bet
+                for active_bet in active_bets:
+                    exchange.cancel_bet(active_bet) # Remove bet from exchange
+                    active_bet.cancel() # Update state of bet
+                    rdm_bettor.cancel_bet(active_bet) # Remove bet from bettor
+                
+                rdm_bettor.add_bet(new_bet)
+                '''
+                Add the new bet to the exchange, and retrieve the bets it
+                was matched with (if any) and the cost of placing the bet
+                '''
                 matched_this_bet = []
-
-                '''
-                Add it to the exchange, and retrieve the bets it was
-                matched with (if any) and the cost of placing the bet
-                '''
                 bet_cost = exchange.add_bet(new_bet, matched_this_bet)
 
                 '''Update the imutable view of the current state of the LOB'''
@@ -151,7 +161,7 @@ if __name__ == "__main__":
                 '''
                 rdm_bettor.deduct_funds(bet_cost)
 
-                '''Update the record of matched bets'''
+                '''Update the record of all matched bets'''
                 matched_bets.extend(matched_this_bet)
 
                 '''Notify each bettor of the newly matched bets'''
@@ -166,19 +176,6 @@ if __name__ == "__main__":
 
             '''Increment time'''
             t += 1
-
-            for bettor in bettor_list:
-                current_bets = bettor.get_active_bets()
-                current_bet: Bet
-                for current_bet in current_bets:
-                    if ((t - current_bet.get_time()) > bet_expire_time and
-                        current_bet.get_unmatched() > 0 and
-                        not current_bet.is_cancelled()
-                    ):
-                        exchange.cancel_bet(current_bet)
-                        current_bet.cancel()
-                        print(current_bet)
-                        bettor.cancel_bet(current_bet)
 
     '''Refund money to bettors from all of their unmatched bets'''
     for bettor in bettor_list:

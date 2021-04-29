@@ -15,7 +15,7 @@ class Bettor(object):
         self.__num_simulations: int = num_simulations
         self.__backs: list = []
         self.__lays: list = []
-        self.__current_bets: list = []
+        self.__active_bets: list = []
         self.__matched_bets: list = []
         self._previous_odds: np.int32 = None
         
@@ -35,15 +35,15 @@ class Bettor(object):
         return self.__lays
 
     def get_active_bets(self) -> list:
-        return self.__current_bets
+        return self.__active_bets
 
     def get_matched_bets(self) -> list:
         return self.__matched_bets
 
     def cancel_bet(self, bet: Bet) -> None:
         refund: int = 0
-        bet: Bet
-        self.__current_bets.remove(bet)
+        self.__active_bets.remove(bet)
+        
         if type(bet) is Back:
             refund = bet.get_unmatched()
         else:
@@ -56,6 +56,10 @@ class Bettor(object):
 
     def _get_max_back_stake(self) -> int:
         return self.get_balance()
+
+    def add_bet(self, bet: Bet):
+        '''Add a bet to the bettors record of currently active bets'''
+        self.__active_bets.append(bet)
 
     def _new_back(self, event_id: int, odds: int, stake: int, time: int) -> Back:
         '''Create a new back and add to bettors record of backs'''
@@ -85,7 +89,6 @@ class Bettor(object):
         if stake < 200:
             raise Exception("Cannot place a bet with stake %d. Stake must be greater than 200!", stake)
 
-        
         lay = Lay(self.__id, event_id, odds, stake, time)
         self.__lays.append(lay)
         return lay
@@ -98,16 +101,13 @@ class Bettor(object):
 
     def cancel_unmatched(self) -> None:
         '''Cancel all unmatched bets'''
-        back: Back
-        sum_refund = 0
-        for back in self.__backs:
-            self.__balance += back.get_unmatched()
-            sum_refund += back.get_unmatched()
-
-        lay: Lay
-        for lay in self.__lays:
-            self.__balance += lay.get_unmatched_liability()
-            sum_refund += lay.get_unmatched_liability()
+        for bet in self.__active_bets:
+            if type(bet) is Back:
+                refund = bet.get_unmatched()
+            else:
+                refund = bet.get_unmatched_liability()
+            self.add_funds(refund)
+        self.__active_bets = []
 
     # The following methods should be implemented in a new betting agent:
     def get_bet(self, lob_view: dict, percent_complete: float, time: int) -> Bet:
@@ -130,6 +130,13 @@ class Bettor(object):
         to new bets being matched.
         '''
         self.__matched_bets.append(matched_bet)
+
+        '''Remove matched bets'''
+        self.__active_bets = list(filter(
+            (lambda active_bet: active_bet.get_unmatched() > 0),
+            self.__active_bets
+        ))
+
 
     def __str__(self) -> str:
         return '{name=%s, id=%d, balance=£%.2f, n_sims=%d, backs=%d, lays=%d}' % \
