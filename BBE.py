@@ -103,7 +103,6 @@ if __name__ == "__main__":
     matched_bets = []
 
     t: int = 0
-    bet_expire_time: int = 10
     percent_complete: float = 0.0
 
     while not race.is_finished():
@@ -142,7 +141,9 @@ if __name__ == "__main__":
                     active_bet.cancel() # Update state of bet
                     rdm_bettor.cancel_bet(active_bet) # Remove bet from bettor
                 
+                '''Update bettor's internal record of currently held bets'''
                 rdm_bettor.add_bet(new_bet)
+                
                 '''
                 Add the new bet to the exchange, and retrieve the bets it
                 was matched with (if any) and the cost of placing the bet

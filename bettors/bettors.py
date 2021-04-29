@@ -4,8 +4,6 @@ from bets import Bet
 from bets import *
 import numpy as np
 import sys
-sys.path.append('../BBE-Racing-Sim/')
-from sim_output import plot_winners_freqs
 
 class Bettor(object):
     def __init__(self, name: str, id: int, balance: int, num_simulations: int):
