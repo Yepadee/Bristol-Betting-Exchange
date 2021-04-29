@@ -1,6 +1,10 @@
 from .bettors import *
 
 class NoiseBettor(Bettor):
+    '''
+    A bettor who picks a random competetor who they think will win.
+    '''
+
     def __init__(self, id: int, balance: int, num_simulations: int, favorite_event_id: int):
         super().__init__("NOISE", id, balance, num_simulations)
         self.__favorite_event_id = favorite_event_id

@@ -74,11 +74,11 @@ if __name__ == "__main__":
 
     '''Add Bettors'''
     bettors = {}
-    for i in range(50):
+    for i in range(100):
         n_sims = 2 ** np.random.randint(1, 8)
         bettors[i] = NaiveBettor(id=i, balance=10000, num_simulations=n_sims)
 
-    for i in range(50, 52):
+    for i in range(100, 120):
         n_sims = 2 ** np.random.randint(1, 8)
         bettors[i] = BackToLayBettor(id=i, balance=10000, num_simulations=n_sims)
 

@@ -41,14 +41,14 @@ class LayToBackBettor(Bettor):
 
     def get_bet(self, lob_view: dict, percent_complete: float, time: int) -> Bet:
         new_bet = None
-        max_stake = self.get_balance() // 4 # Only alocate a quarter of balance for backing 
+        max_stake =  3 * self.get_balance() // 4 # Only alocate a quarter of balance for backing 
         if self._previous_odds is not None and self.get_balance() > 0:
-            if self.__state == 'backing':
+            if self.__state == 'laying':
                 '''
-                Which competetor is likely to see a decrease in odds?
-                Find a competetor with a lay bet available that is higher than our predicted odds :)
+                Which competetor is likely to see an increase in odds?
+                Find a competetor with a back bet available that is lower than our predicted odds :)
                 '''
-                best_event_id = self.__get_underestimated_event(lob_view)
+                best_event_id = self.__get_overestimated_event(lob_view)
 
                 if best_event_id is not None:
                     available_stake = lob_view[best_event_id]['lays']['stakes'][0]
@@ -59,9 +59,9 @@ class LayToBackBettor(Bettor):
                     self.__backed_event_id = best_event_id
                     self.__backed_odds = odds
                     self.__backed_stake = bet_stake
-                    self.__state = 'laying'
+                    self.__state = 'backing'
 
-            elif self.__state == 'laying':
+            elif self.__state == 'backing':
                 '''
                 Place a lay bet when the odds available are lower than what we placed a back bet for
                 '''

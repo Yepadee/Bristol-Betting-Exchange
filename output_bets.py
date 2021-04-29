@@ -36,7 +36,7 @@ def plot_bets(n_events: int, matched_bets: list, fig_path: str) -> None:
 
     
 
-    plt.yscale("log", basey=2)
+    plt.yscale("log", base=2)
     ax.yaxis.set_major_formatter(ScalarFormatter())
     ax.yaxis.set_minor_formatter(ScalarFormatter())
     
