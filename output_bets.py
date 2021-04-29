@@ -1,7 +1,10 @@
-import numpy as np
 import matplotlib.pyplot as plt
 import os
 from lob import MatchedBet
+from matplotlib.ticker import ScalarFormatter
+
+def shift_bit_length(x):
+    return 1<<(x-1).bit_length()
 
 def plot_bets(n_events: int, matched_bets: list, fig_path: str) -> None:
     _, ax = plt.subplots()
@@ -30,7 +33,15 @@ def plot_bets(n_events: int, matched_bets: list, fig_path: str) -> None:
     
     ax.set_ylabel('Decimal Odds')
     ax.set_xlabel('Time/s')
+
     
+
+    plt.yscale("log", basey=2)
+    ax.yaxis.set_major_formatter(ScalarFormatter())
+    ax.yaxis.set_minor_formatter(ScalarFormatter())
+    
+    ax.set_yticks([1.0, 2.0, 4.0, 8.0, 16.0, 32.0])
+
     dir_path = os.path.dirname(fig_path)
 
     if not os.path.exists(dir_path):
