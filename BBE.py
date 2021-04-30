@@ -1,7 +1,8 @@
 from bets import *
 from bettors.bettors import *
-from bettors.naive_bettor import *
+from bettors.predicted_winner_bettor import *
 from bettors.back_to_lay_bettor import *
+from bettors.lay_to_back_bettor import *
 
 from exchange import BettingExchange
 from output_bets import plot_bets
@@ -74,11 +75,11 @@ if __name__ == "__main__":
 
     '''Add Bettors'''
     bettors = {}
-    for i in range(100):
+    for i in range(10):
         n_sims = 2 ** np.random.randint(1, 8)
-        bettors[i] = NaiveBettor(id=i, balance=10000, num_simulations=n_sims)
+        bettors[i] = PredictedWinnerBettor(id=i, balance=10000, num_simulations=n_sims)
 
-    for i in range(100, 120):
+    for i in range(10, 12):
         n_sims = 2 ** np.random.randint(1, 8)
         bettors[i] = BackToLayBettor(id=i, balance=10000, num_simulations=n_sims)
 
@@ -98,7 +99,7 @@ if __name__ == "__main__":
     all_odds = []
    
     opinion_update_period: int = 10
-    actions_per_period: int = 10
+    actions_per_period: int = len(bettor_list)
     
     lob_view = exchange.get_lob_view()
     matched_bets = []
@@ -174,7 +175,9 @@ if __name__ == "__main__":
                     b1: Bettor = bettors[b1Id]
                     b2: Bettor = bettors[b2Id]
                     b1.bookkeep(matched_bet)
+                    b1.on_bet_matched(matched_bet)
                     b2.bookkeep(matched_bet)
+                    b2.on_bet_matched(matched_bet)
 
             '''Increment time'''
             t += 1

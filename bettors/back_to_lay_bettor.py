@@ -29,21 +29,22 @@ class BackToLayBettor(Bettor):
             if len(lay_odds) > 0:
                 best_lay = lay_odds[0]
                 diff = best_lay - predicted_odds
-                # print("")
-                # print(event_id)
-                # print(best_lay)
-                # print(predicted_odds)
-                # print(diff)
                 if diff > biggest_diff:
                     biggest_diff = diff
                     best_event = event_id
-        # print("best_event: ", best_event)
-        # print("")
         return best_event
 
     def __calculate_lay_stake(self, lay_odds) -> int:
         lay_stake = ((self.__backed_odds // 100) * self.__backed_stake) // (lay_odds // 100)
         return lay_stake
+
+    def on_bet_matched(self, matched_bet: MatchedBet) -> None:
+        if matched_bet.get_backer_id() == self.get_id():
+            '''If our back bet got matched, update our state'''
+            self.__state = 'laying'
+        else:
+            '''Otherwise, we were the laying party in the bet'''
+            self.__state = 'done'
 
     def get_bet(self, lob_view: dict, percent_complete: float, time: int) -> Bet:
         new_bet = None
@@ -65,7 +66,6 @@ class BackToLayBettor(Bettor):
                     self.__backed_event_id = best_event_id
                     self.__backed_odds = odds
                     self.__backed_stake = bet_stake
-                    self.__state = 'laying'
 
             elif self.__state == 'laying':
                 '''
@@ -74,11 +74,12 @@ class BackToLayBettor(Bettor):
                 available_backs = lob_view[self.__backed_event_id]['backs']['odds']
                 if len(available_backs) > 0:
                     lowest_odds = available_backs[0]
-                    if lowest_odds < self.__backed_odds:
+                    if lowest_odds < self.__backed_odds or percent_complete >= 0.9:
                         bet_stake = self.__calculate_lay_stake(lowest_odds)
-                        if bet_stake <= self._get_max_lay_stake(lowest_odds):
+                        max_lay_stake = self._get_max_lay_stake(lowest_odds)
+                        bet_stake = bet_stake if bet_stake < max_lay_stake else max_lay_stake
+                        if bet_stake > 200:
                             new_bet = self._new_lay(event_id=self.__backed_event_id, odds=lowest_odds, stake=bet_stake, time=time)
-                            self.__state = 'done'
 
         return new_bet
 

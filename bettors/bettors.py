@@ -107,6 +107,9 @@ class Bettor(object):
             self.add_funds(refund)
         self.__active_bets = []
 
+    def on_bet_matched(self, matched_bet: MatchedBet) -> None:
+        pass
+
     # The following methods should be implemented in a new betting agent:
     def get_bet(self, lob_view: dict, percent_complete: float, time: int) -> Bet:
         '''
