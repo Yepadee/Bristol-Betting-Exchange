@@ -17,10 +17,9 @@ class NoiseBettor(Bettor):
             if rdm == 0:
                 if self.get_balance() > 200:
                     max_stake = self._get_max_back_stake()
-                    stake = max_stake // 2
+                    stake = max_stake if max_stake < 400 else max_stake // 2
                     best_competetor = self.__favorite_event_id
                     odds = self._previous_odds[best_competetor - 1]
-
                     new_bet = self._new_back(best_competetor, odds, stake, time)
             else:
                 worst_competetor = np.random.randint(0, self._previous_odds.size)

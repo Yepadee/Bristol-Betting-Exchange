@@ -3,6 +3,7 @@ from bettors.bettors import *
 from bettors.predicted_winner_bettor import *
 from bettors.back_to_lay_bettor import *
 from bettors.lay_to_back_bettor import *
+from bettors.noise_bettor import *
 
 from exchange import BettingExchange
 from output_bets import plot_bets
@@ -75,12 +76,17 @@ if __name__ == "__main__":
 
     '''Add Bettors'''
     bettors = {}
-    for i in range(10):
-        n_sims = 2 ** np.random.randint(1, 8)
+    for i in range(50):
+        n_sims = np.random.randint(1, 100)
+        bettors[i] = NoiseBettor(id=i, balance=10000, num_simulations=n_sims, n_events=n_competetors)
+
+    for i in range(50, 100):
+        n_sims = np.random.randint(1, 100)
         bettors[i] = PredictedWinnerBettor(id=i, balance=10000, num_simulations=n_sims)
 
-    for i in range(10, 12):
-        n_sims = 2 ** np.random.randint(1, 8)
+
+    for i in range(100, 120):
+        n_sims = np.random.randint(1, 100)
         bettors[i] = BackToLayBettor(id=i, balance=10000, num_simulations=n_sims)
 
     bettor_list = list(bettors.values())
@@ -201,13 +207,13 @@ if __name__ == "__main__":
     #     print(b)
     #     for mb in b.get_matched_bets():
     #         print(mb)   
-
+    print(lob_view)
     print(sum_bal)
     print(race.get_winner())
 
-all_positions = np.array(all_positions)
-all_odds = np.array(all_odds)
+    all_positions = np.array(all_positions)
+    all_odds = np.array(all_odds)
 
-plot_odds(n_competetors, actions_per_period, all_odds, "output/odds")
-plot_positions(n_competetors, actions_per_period, all_positions, "output/positions-odds")
-plot_bets(n_competetors, matched_bets, "output/market-odds")
+    plot_odds(n_competetors, actions_per_period, all_odds, "output/odds")
+    plot_positions(n_competetors, actions_per_period, all_positions, "output/positions-odds")
+    plot_bets(n_competetors, matched_bets, "output/market-odds")
