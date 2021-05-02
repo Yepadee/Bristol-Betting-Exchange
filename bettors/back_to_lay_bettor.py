@@ -5,8 +5,8 @@ class BackToLayBettor(Bettor):
     A bettor who attempts the back to lay strategy
     by first placing a back bet, then placing a lay bet at lower odds.
     '''
-    def __init__(self, id: int, balance: int, num_simulations: int):
-        super().__init__("BTL", id, balance, num_simulations)
+    def __init__(self, id: int, balance: int, num_simulations: int, n_events: int):
+        super().__init__("BTL", id, balance, num_simulations, n_events)
         self.__state = 'backing'
         self.__backed_event_id = None
         self.__backed_odds = None

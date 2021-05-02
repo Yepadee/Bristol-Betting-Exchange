@@ -6,8 +6,8 @@ class PredictedWinnerBettor(Bettor):
     Only places back bets.
     '''
 
-    def __init__(self, id: int, balance: int, num_simulations: int):
-        super().__init__("PWB", id, balance, num_simulations)
+    def __init__(self, id: int, balance: int, num_simulations: int, n_events: int):
+        super().__init__("PWB", id, balance, num_simulations, n_events)
 
     def get_bet(self, lob_view: dict, percent_complete: float, time: int) -> Bet:
         new_bet = None

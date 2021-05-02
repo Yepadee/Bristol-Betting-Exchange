@@ -1,6 +1,6 @@
 from .bettors import *
 
-class SheepBettor(Bettor):
+class SheepBackBettor(Bettor):
     '''
     A bettor who uses only the market
     '''

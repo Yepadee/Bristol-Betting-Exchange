@@ -6,11 +6,13 @@ import numpy as np
 import sys
 
 class Bettor(object):
-    def __init__(self, name: str, id: int, balance: int, num_simulations: int):
+    def __init__(self, name: str, id: int, balance: int, num_simulations: int, n_events: int):
         self.__name: str = name
         self.__id: int = id
         self.__balance: int = balance
         self.__num_simulations: int = num_simulations
+        self.__n_events: int = n_events
+
         self.__backs: list = []
         self.__lays: list = []
         self.__active_bets: list = []
@@ -25,6 +27,9 @@ class Bettor(object):
 
     def get_num_simulations(self) -> int:
         return self.__num_simulations
+
+    def _get_n_events(self) -> int:
+        return self.__n_events
 
     def get_backs(self) -> list:
         return self.__backs

@@ -6,7 +6,7 @@ class NoiseBettor(Bettor):
     '''
 
     def __init__(self, id: int, balance: int, num_simulations: int, n_events: int):
-        super().__init__("NOISE", id, balance, num_simulations)
+        super().__init__("NSE", id, balance, num_simulations, n_events)
         self.__favorite_event_id = np.random.randint(1, n_events + 1)
 
     def get_bet(self, lob_view: dict, percent_complete: float, time: int) -> Bet:
@@ -22,7 +22,7 @@ class NoiseBettor(Bettor):
                     odds = self._previous_odds[favorite_event_id - 1]
                     new_bet = self._new_back(favorite_event_id, odds, stake, time)
             else:
-                worst_competetor = np.random.randint(0, self._previous_odds.size)
+                worst_competetor = np.random.randint(0, self._get_n_events())
                 odds = self._previous_odds[worst_competetor]
 
                 max_stake = self._get_max_lay_stake(odds)

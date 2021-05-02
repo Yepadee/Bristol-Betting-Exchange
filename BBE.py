@@ -6,21 +6,65 @@ from bettors.lay_to_back_bettor import *
 from bettors.noise_bettor import *
 
 from exchange import BettingExchange
-from output_bets import plot_bets
+from plot_bets import plot_bets
 
 import random
-
+import json
 import sys
-sys.path.append('../BBE-Racing-Sim/')
+from functools import reduce
 
+sys.path.append('../BBE-Racing-Sim/')
 from racesim import *
 from sim_output import plot_winners
 from output_odds import plot_odds, plot_positions
 
-from functools import reduce
+current_id: int = 0
 
-def pick_random_bettor(bettors: list) -> Bettor:
-    return bettors[random.randint(0, len(bettors) - 1)]
+def load_bettor(bettor_type: str, balance: int, rng1: int, rng2: int, n_events: int, all_bettors: dict) -> None:
+    global current_id
+    n_sims: int = np.random.randint(rng1, rng2)
+    bettor: Bettor = None
+    if bettor_type == "BTL":
+        bettor = BackToLayBettor(current_id, balance, n_sims, n_events)
+    elif bettor_type == "LTB":
+        bettor = LayToBackBettor(current_id, balance, n_sims, n_events)
+    elif bettor_type == "PWB":
+        bettor = PredictedWinnerBettor(current_id, balance, n_sims, n_events)
+    elif bettor_type == "NSE":
+        bettor = NoiseBettor(current_id, balance, n_sims, n_events)
+
+    all_bettors[current_id] = bettor
+    current_id += 1
+
+def load_bettors(all_bettors: dict, bettor_info: dict, n_events: int) -> None:
+    bettor_type: str = bettor_info["type"]
+    quantity: int = bettor_info["quantity"]
+    balance: int = bettor_info["balance"]
+    rng1 = bettor_info["n_sims"][0]
+    rng2 = bettor_info["n_sims"][1]
+    
+    for i in range(quantity):
+        load_bettor(bettor_type, balance, rng1, rng2, n_events, all_bettors)
+
+def parse_config(n_events: int):
+    '''
+    Parse BBE config.
+    Returns parsed objects.
+    '''
+
+    f = open('resources/config.json', 'r', encoding='utf-8')
+    config = json.load(f)
+    f.close()
+
+    opinion_update_period = config["opinion_update_period"]
+    actions_per_period = config["actions_per_period"]
+    bettors = config["bettors"]
+
+    all_bettors = {}
+    for bettor_info in bettors:
+        load_bettors(all_bettors, bettor_info, n_events)
+
+    return opinion_update_period, actions_per_period, all_bettors
 
 def get_num_simulations(bettors: list) -> int:
     return reduce((lambda acc, b: acc + b.get_num_simulations()), bettors, 0)
@@ -48,8 +92,8 @@ def distribute_winnings(bettors: dict, matched_bets: list, successful_event_id: 
         else:
             layer.add_funds(matched_bet.get_layer_winnings())
 
-def shift_bit_length(x):
-    return 1<<(x-1).bit_length()
+def pick_random_bettor(bettors: list) -> Bettor:
+    return bettors[random.randint(0, len(bettors) - 1)]
 
 def get_next_bet(bettor_list: list, lob_view: dict, percent_complete: float, t: int) -> Bet:
     n_bettors = len(bettor_list)
@@ -73,43 +117,29 @@ if __name__ == "__main__":
 
     '''Create Exchange'''
     exchange: BettingExchange = BettingExchange(n_competetors)
+    lob_view = exchange.get_lob_view()
 
     '''Add Bettors'''
-    bettors = {}
-    for i in range(10):
-        n_sims = np.random.randint(1, 100)
-        bettors[i] = NoiseBettor(id=i, balance=10000, num_simulations=n_sims, n_events=n_competetors)
-
-    for i in range(10, 20):
-        n_sims = np.random.randint(1, 100)
-        bettors[i] = PredictedWinnerBettor(id=i, balance=10000, num_simulations=n_sims)
-
-
-    for i in range(20, 30):
-        n_sims = np.random.randint(1, 100)
-        bettors[i] = BackToLayBettor(id=i, balance=10000, num_simulations=n_sims)
+    opinion_update_period, actions_per_period, bettors = parse_config(n_competetors)
 
     bettor_list = list(bettors.values())
     n_bettors = len(bettor_list)
 
     '''Calculate total number of race simulations needed'''
     n_simulations: int = get_num_simulations(bettor_list)
-    n_simulations = shift_bit_length(n_simulations)
+    n_simulations = 1<<(n_simulations-1).bit_length()
     print("num simulations: %d" % n_simulations)
 
     '''Create race simulation instances'''
     race: RaceSimSerial = RaceSimSerial(track_params, competetor_params)
     race_simulations: RaceSimParallel = RaceSimParallel(n_simulations, track_params, competetor_params)
 
+    '''Variables to record activity in race and market'''
     all_positions = []
     all_odds = []
-   
-    opinion_update_period: int = 5
-    actions_per_period: int = len(bettor_list)
-    
-    lob_view = exchange.get_lob_view()
     matched_bets = []
 
+    '''Variables to track time'''
     t: int = 0
     percent_complete: float = 0.0
 

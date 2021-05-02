@@ -5,8 +5,8 @@ class LayToBackBettor(Bettor):
     A bettor who attempts the lay to back strategy
     by first placing a lay bet, then placing a back bet at higher odds.
     '''
-    def __init__(self, id: int, balance: int, num_simulations: int):
-        super().__init__("LTB", id, balance, num_simulations)
+    def __init__(self, id: int, balance: int, num_simulations: int, n_events: int):
+        super().__init__("LTB", id, balance, num_simulations, n_events)
         self.__state = 'laying'
         self.__layed_event_id = None
         self.__layed_odds = None
