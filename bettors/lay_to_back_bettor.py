@@ -39,6 +39,14 @@ class LayToBackBettor(Bettor):
         lay_stake = ((self.__layed_odds // 100) * self.__layed_stake) // (back_odds // 100)
         return lay_stake
 
+    def on_bet_matched(self, matched_bet: MatchedBet) -> None:
+        if matched_bet.get_backer_id() == self.get_id():
+            '''If our lay bet got matched, update our state'''
+            self.__state = 'backing'
+        else:
+            '''Otherwise, we were the betting party in the bet'''
+            self.__state = 'done'
+
     def get_bet(self, lob_view: dict, percent_complete: float, time: int) -> Bet:
         new_bet = None
         if self._previous_odds is not None and self.get_balance() > 0:
@@ -73,7 +81,6 @@ class LayToBackBettor(Bettor):
                         max_stake = self._get_max_back_stake()
                         bet_stake = bet_stake if bet_stake < max_stake else max_stake
                         new_bet = self._new_lay(event_id=self.__layed_event_id, odds=lowest_odds, stake=bet_stake, time=time)
-                        self.__state = 'done'
 
         return new_bet
 

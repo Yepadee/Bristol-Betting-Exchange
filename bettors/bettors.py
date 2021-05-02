@@ -140,8 +140,8 @@ class Bettor(object):
 
 
     def __str__(self) -> str:
-        return '{name=%s, id=%d, balance=£%.2f, n_sims=%d, backs=%d, lays=%d}' % \
-               (self.__name, self.__id, self.__balance/100.0, self.__num_simulations, len(self.__backs), len(self.__lays))
+        return '{name=%s, id=%d, balance=£%.2f, n_sims=%d, backs=%d, lays=%d, matched=%d}' % \
+               (self.__name, self.__id, self.__balance/100.0, self.__num_simulations, len(self.__backs), len(self.__lays), len(self.__matched_bets))
 
 
 

@@ -76,16 +76,16 @@ if __name__ == "__main__":
 
     '''Add Bettors'''
     bettors = {}
-    for i in range(50):
+    for i in range(10):
         n_sims = np.random.randint(1, 100)
         bettors[i] = NoiseBettor(id=i, balance=10000, num_simulations=n_sims, n_events=n_competetors)
 
-    for i in range(50, 100):
+    for i in range(10, 20):
         n_sims = np.random.randint(1, 100)
         bettors[i] = PredictedWinnerBettor(id=i, balance=10000, num_simulations=n_sims)
 
 
-    for i in range(100, 120):
+    for i in range(20, 30):
         n_sims = np.random.randint(1, 100)
         bettors[i] = BackToLayBettor(id=i, balance=10000, num_simulations=n_sims)
 
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     all_positions = []
     all_odds = []
    
-    opinion_update_period: int = 10
+    opinion_update_period: int = 5
     actions_per_period: int = len(bettor_list)
     
     lob_view = exchange.get_lob_view()
@@ -202,11 +202,14 @@ if __name__ == "__main__":
         sum_bal += b.get_balance()
         print(b)
 
-    # for b in bettor_list:
-    #     print("")
-    #     print(b)
-    #     for mb in b.get_matched_bets():
-    #         print(mb)   
+    f = open("output/matched_bets_log.txt", "w", encoding='utf-8')
+    for b in bettor_list:
+        f.write(str(b))
+        for mb in b.get_matched_bets():
+            f.write("\n\t" + str(mb))
+        f.write("\n")
+    f.close()
+
     print(lob_view)
     print(sum_bal)
     print(race.get_winner())
