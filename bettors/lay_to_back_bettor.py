@@ -36,7 +36,7 @@ class LayToBackBettor(Bettor):
         return best_event
 
     def __calculate_back_stake(self, back_odds) -> int:
-        back_stake = ((self.__layed_odds // 100) * self.__layed_stake) // (back_odds // 100)
+        back_stake = self.__layed_odds * self.__layed_stake // back_odds
         return back_stake
 
     def on_bet_matched(self, matched_bet: MatchedBet) -> None:
@@ -60,12 +60,10 @@ class LayToBackBettor(Bettor):
                 if best_event_id is not None:
                     available_stake = lob_view[best_event_id]['backs']['stakes'][0]
                     odds = lob_view[best_event_id]['backs']['odds'][0]
-                    max_stake = (self._get_max_lay_stake(odds)) // 6
+                    max_stake = (self._get_max_lay_stake(odds) * 3) // 4
                     bet_stake = available_stake if available_stake < max_stake else max_stake
                     bet_stake = bet_stake if bet_stake > 200 else 200
                     new_bet = self._new_lay(event_id=best_event_id, odds=odds, stake=bet_stake, time=time)
-                    print("e_id: ", best_event_id)
-                    print(new_bet)
                     self.__layed_event_id = best_event_id
                     self.__layed_odds = odds
                     self.__layed_stake = bet_stake
@@ -74,15 +72,25 @@ class LayToBackBettor(Bettor):
                 '''
                 Place a back bet when the odds available are higher than what we placed a lay bet for.
                 '''
-                available_backs = lob_view[self.__layed_event_id]['backs']['odds']
+                available_backs = lob_view[self.__layed_event_id]['lays']['odds']
                 if len(available_backs) > 0:
-                    lowest_odds = available_backs[0]
-                    if lowest_odds < self.__layed_odds:
-                        bet_stake = self.__calculate_back_stake(lowest_odds)
+                    highest_odds = available_backs[0]
+                    if highest_odds > self.__layed_odds or percent_complete >= 0.9:
+                        bet_stake = self.__calculate_back_stake(highest_odds)
                         max_stake = self._get_max_back_stake()
+                        bet_stake = bet_stake if bet_stake > 200 else 200
                         bet_stake = bet_stake if bet_stake < max_stake else max_stake
-                        new_bet = self._new_lay(event_id=self.__layed_event_id, odds=lowest_odds, stake=bet_stake, time=time)
-
+                        
+                        print("ms: ", max_stake)
+                        print("bs: ", bet_stake)
+                        print("bo: ", highest_odds)
+                        print("lo:", self.__layed_odds)
+                        print("ls: ", self.__layed_stake)
+                        print("---")
+                        if bet_stake >= 200:
+                            new_bet = self._new_back(event_id=self.__layed_event_id, odds=highest_odds, stake=bet_stake, time=time)
+                            print("lo: ", highest_odds)
+                            print(new_bet)
         return new_bet
 
 

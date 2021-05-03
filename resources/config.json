@@ -24,7 +24,7 @@
             "type": "LTB",
             "balance": 10000,
             "n_sims": [50, 100],
-            "quantity": 0
+            "quantity": 5
         }
     ]
 }
