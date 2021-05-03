@@ -16,14 +16,16 @@ from functools import reduce
 sys.path.append('../BBE-Racing-Sim/')
 from racesim import *
 from sim_output import plot_winners
-from output_odds import plot_odds, plot_positions
+from plot import plot_odds, plot_positions
 
 current_id: int = 0
 
 def load_bettor(bettor_type: str, balance: int, rng1: int, rng2: int, n_events: int, all_bettors: dict) -> None:
     global current_id
+
     n_sims: int = np.random.randint(rng1, rng2)
     bettor: Bettor = None
+
     if bettor_type == "BTL":
         bettor = BackToLayBettor(current_id, balance, n_sims, n_events)
     elif bettor_type == "LTB":
@@ -32,6 +34,8 @@ def load_bettor(bettor_type: str, balance: int, rng1: int, rng2: int, n_events: 
         bettor = PredictedWinnerBettor(current_id, balance, n_sims, n_events)
     elif bettor_type == "NSE":
         bettor = NoiseBettor(current_id, balance, n_sims, n_events)
+    else:
+        raise Exception("ERROR: '%s' is an invalid bettor type!" % bettor_type)
 
     all_bettors[current_id] = bettor
     current_id += 1
@@ -225,7 +229,7 @@ if __name__ == "__main__":
     '''Distribute winnings to all bettors'''
     distribute_winnings(bettors, matched_bets, race.get_winner())
 
-    bettor_list.sort(reverse=True, key=(lambda b: b.get_balance()))
+    bettor_list.sort(reverse=True, key=(lambda b: b.get_profit()))
     sum_bal = 0
     b: Bettor
     for b in bettor_list:

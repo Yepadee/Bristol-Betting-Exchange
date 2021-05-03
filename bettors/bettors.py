@@ -13,6 +13,7 @@ class Bettor(object):
         self.__num_simulations: int = num_simulations
         self.__n_events: int = n_events
 
+        self.__initial_balance: int = balance
         self.__backs: list = []
         self.__lays: list = []
         self.__active_bets: list = []
@@ -24,6 +25,9 @@ class Bettor(object):
 
     def get_balance(self) -> int:
         return self.__balance
+
+    def get_profit(self) -> int:
+        return self.get_balance() - self.__initial_balance
 
     def get_num_simulations(self) -> int:
         return self.__num_simulations
@@ -53,12 +57,24 @@ class Bettor(object):
             refund = bet.get_unmatched_liability()
 
         self.add_funds(refund)
+
+    def get_available_balance(self) -> int:
+        avl_balance = self.get_balance()
+        active_bet: Bet
+        for active_bet in self.get_active_bets():
+            if type(active_bet) is Back:
+                active_bet: Back
+                avl_balance += active_bet.get_unmatched()
+            else:
+                active_bet: Lay
+                avl_balance += active_bet.get_unmatched_liability()
+        return avl_balance
             
     def _get_max_lay_stake(self, odds) -> int:
-        return int(self.get_balance() / (odds / 100.0))
+        return int(self.get_available_balance() / (odds / 100.0))
 
     def _get_max_back_stake(self) -> int:
-        return self.get_balance()
+        return self.get_available_balance()
 
     def add_bet(self, bet: Bet):
         '''Add a bet to the bettors record of currently active bets'''
@@ -67,7 +83,7 @@ class Bettor(object):
     def _new_back(self, event_id: int, odds: int, stake: int, time: int) -> Back:
         '''Create a new back and add to bettors record of backs'''
 
-        if stake > self.__balance:
+        if stake > self.get_available_balance():
             raise Exception("Bettor has insufficient funds for new back. Has £%.2f, needs £%.2f" % (self.__balance/100.0, stake/100.0))
 
         if odds <= 100:
@@ -83,8 +99,8 @@ class Bettor(object):
     def _new_lay(self, event_id: int, odds: int, stake: int, time: int) -> Lay:
         '''Create a new lay and add to bettors record of lays'''
         liability = stake * odds // 100
-        if liability > self.__balance:
-            raise Exception("Bettor has insufficient funds for new back. Has £%.2f, needs £%.2f" % (self.__balance/100.0, liability/100.0))
+        if liability > self.get_available_balance():
+            raise Exception("Bettor has insufficient funds for new lay. Has £%.2f, needs £%.2f" % (self.__balance/100.0, liability/100.0))
         
         if odds <= 100:
             raise Exception("Cannot place a bet with odds %d. Odds must be greater than 1.00!", odds)
@@ -145,8 +161,8 @@ class Bettor(object):
 
 
     def __str__(self) -> str:
-        return '{name=%s, id=%d, balance=£%.2f, n_sims=%d, backs=%d, lays=%d, matched=%d}' % \
-               (self.__name, self.__id, self.__balance/100.0, self.__num_simulations, len(self.__backs), len(self.__lays), len(self.__matched_bets))
+        return '{name=%s, id=%d, profit=£%.2f, balance=£%.2f, n_sims=%d, backs=%d, lays=%d, matched=%d}' % \
+               (self.__name, self.__id, self.get_profit()/100.0, self.__balance/100.0, self.__num_simulations, len(self.__backs), len(self.__lays), len(self.__matched_bets))
 
 
 

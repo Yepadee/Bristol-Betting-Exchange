@@ -36,11 +36,11 @@ class LayToBackBettor(Bettor):
         return best_event
 
     def __calculate_back_stake(self, back_odds) -> int:
-        lay_stake = ((self.__layed_odds // 100) * self.__layed_stake) // (back_odds // 100)
-        return lay_stake
+        back_stake = ((self.__layed_odds // 100) * self.__layed_stake) // (back_odds // 100)
+        return back_stake
 
     def on_bet_matched(self, matched_bet: MatchedBet) -> None:
-        if matched_bet.get_backer_id() == self.get_id():
+        if matched_bet.get_layer_id() == self.get_id():
             '''If our lay bet got matched, update our state'''
             self.__state = 'backing'
         else:
@@ -60,14 +60,15 @@ class LayToBackBettor(Bettor):
                 if best_event_id is not None:
                     available_stake = lob_view[best_event_id]['backs']['stakes'][0]
                     odds = lob_view[best_event_id]['backs']['odds'][0]
-                    max_stake = (self._get_max_lay_stake(odds) * 3) // 4
+                    max_stake = (self._get_max_lay_stake(odds)) // 6
                     bet_stake = available_stake if available_stake < max_stake else max_stake
-                    bet_stake = bet_stake if bet_stake > 200 else 200 
+                    bet_stake = bet_stake if bet_stake > 200 else 200
                     new_bet = self._new_lay(event_id=best_event_id, odds=odds, stake=bet_stake, time=time)
+                    print("e_id: ", best_event_id)
+                    print(new_bet)
                     self.__layed_event_id = best_event_id
                     self.__layed_odds = odds
                     self.__layed_stake = bet_stake
-                    self.__state = 'backing'
 
             elif self.__state == 'backing':
                 '''

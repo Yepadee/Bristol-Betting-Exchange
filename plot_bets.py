@@ -3,9 +3,6 @@ import os
 from lob import MatchedBet
 from matplotlib.ticker import ScalarFormatter
 
-def shift_bit_length(x):
-    return 1<<(x-1).bit_length()
-
 def plot_bets(n_events: int, matched_bets: list, fig_path: str) -> None:
     _, ax = plt.subplots()
 

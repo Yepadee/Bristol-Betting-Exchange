@@ -1,24 +1,30 @@
 {
     "opinion_update_period": 10,
-    "actions_per_period": 100,
+    "actions_per_period": 80,
     "bettors" : [
         {
             "type": "NSE",
             "balance": 10000,
-            "n_sims": [1, 100],
+            "n_sims": [1, 20],
             "quantity": 20
         },
         {
             "type": "PWB",
             "balance": 10000,
             "n_sims": [1, 100],
-            "quantity": 20
+            "quantity": 0
         },
         {
             "type": "BTL",
             "balance": 10000,
-            "n_sims": [1, 100],
-            "quantity": 20
+            "n_sims": [50, 100],
+            "quantity": 0
+        },
+        {
+            "type": "LTB",
+            "balance": 10000,
+            "n_sims": [50, 100],
+            "quantity": 0
         }
     ]
 }
