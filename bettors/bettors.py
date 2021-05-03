@@ -161,8 +161,8 @@ class Bettor(object):
 
 
     def __str__(self) -> str:
-        return '{name=%s, id=%d, profit=£%.2f, balance=£%.2f, n_sims=%d, backs=%d, lays=%d, matched=%d}' % \
-               (self.__name, self.__id, self.get_profit()/100.0, self.__balance/100.0, self.__num_simulations, len(self.__backs), len(self.__lays), len(self.__matched_bets))
+        return '{name=%s, id=%d, n_sims=%d, profit=£%.2f, balance=£%.2f, backs=%d, lays=%d, matched=%d}' % \
+               (self.__name, self.__id, self.__num_simulations, self.get_profit()/100.0, self.__balance/100.0, len(self.__backs), len(self.__lays), len(self.__matched_bets))
 
 
 
