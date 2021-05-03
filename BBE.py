@@ -60,6 +60,7 @@ def parse_config(n_events: int):
     config = json.load(f)
     f.close()
 
+    pre_market_time = config["pre_market_time"]
     opinion_update_period = config["opinion_update_period"]
     actions_per_period = config["actions_per_period"]
     bettors = config["bettors"]
@@ -68,7 +69,7 @@ def parse_config(n_events: int):
     for bettor_info in bettors:
         load_bettors(all_bettors, bettor_info, n_events)
 
-    return opinion_update_period, actions_per_period, all_bettors
+    return pre_market_time, opinion_update_period, actions_per_period, all_bettors
 
 def get_num_simulations(bettors: list) -> int:
     return reduce((lambda acc, b: acc + b.get_num_simulations()), bettors, 0)
@@ -114,6 +115,61 @@ def get_next_bet(bettor_list: list, lob_view: dict, percent_complete: float, t: 
 
     return bettor, new_bet
 
+def timestep_market(bettors: dict, bettor_list:list, exchange: BettingExchange, percent_complete: float, t:int):
+    '''Update the imutable view of the current state of the LOB'''
+    lob_view = exchange.get_lob_view()
+
+    '''Get a bet from a random bettor'''
+    rdm_bettor: Bettor
+    new_bet: Bet
+    rdm_bettor, new_bet = get_next_bet(bettor_list, lob_view, percent_complete, t)
+
+    '''If they want to post a new bet then...'''
+    if new_bet is not None:
+        '''Cancel all currently held bets'''
+        active_bets = rdm_bettor.get_active_bets()
+        active_bet: Bet
+        for active_bet in active_bets:
+            exchange.cancel_bet(active_bet) # Remove bet from exchange
+            active_bet.cancel() # Update state of bet
+            rdm_bettor.cancel_bet(active_bet) # Remove bet from bettor
+        
+        '''Update bettor's internal record of currently held bets'''
+        rdm_bettor.add_bet(new_bet)
+        
+        '''
+        Add the new bet to the exchange, and retrieve the bets it
+        was matched with (if any) and the cost of placing the bet
+        '''
+        matched_this_bet = []
+        bet_cost = exchange.add_bet(new_bet, matched_this_bet)
+
+        '''
+        Charge the bettor the cost of the bet.
+        (May be less then estimated cost if it
+        was a lay bet and matched with bets with
+        better odds)
+        '''
+        rdm_bettor.deduct_funds(bet_cost)
+
+        '''Update the record of all matched bets'''
+        matched_bets.extend(matched_this_bet)
+
+        '''Notify each bettor of the newly matched bets'''
+        matched_bet: MatchedBet
+        for matched_bet in matched_this_bet:
+            b1Id: int = matched_bet.get_backer_id()
+            b2Id: int = matched_bet.get_layer_id()
+            b1: Bettor = bettors[b1Id]
+            b2: Bettor = bettors[b2Id]
+            b1.bookkeep(matched_bet)
+            b1.on_bet_matched(matched_bet)
+            b2.bookkeep(matched_bet)
+            b2.on_bet_matched(matched_bet)
+
+    '''Increment time'''
+    t += 1    
+
 if __name__ == "__main__":
     '''Load racesim config'''
     track_params, competetor_params = load_racesim_params()
@@ -121,13 +177,13 @@ if __name__ == "__main__":
 
     '''Create Exchange'''
     exchange: BettingExchange = BettingExchange(n_competetors)
-    lob_view = exchange.get_lob_view()
+    lob_view: dict = exchange.get_lob_view()
 
-    '''Add Bettors'''
-    opinion_update_period, actions_per_period, bettors = parse_config(n_competetors)
+    '''Load config & bettors'''
+    pre_market_time, opinion_update_period, actions_per_period, bettors = parse_config(n_competetors)
 
-    bettor_list = list(bettors.values())
-    n_bettors = len(bettor_list)
+    bettor_list: list = list(bettors.values())
+    n_bettors: int = len(bettor_list)
 
     '''Calculate total number of race simulations needed'''
     n_simulations: int = get_num_simulations(bettor_list)
@@ -144,82 +200,48 @@ if __name__ == "__main__":
     matched_bets = []
 
     '''Variables to track time'''
-    t: int = 0
+    t: int = -pre_market_time
     percent_complete: float = 0.0
 
+    '''Pre Market Betting'''
+    competetor_positions = race.get_competetor_positions()
+
+    '''Run all the simulations from start positions'''
+    print("Running simulations...")
+    predicted_winners = race_simulations.simulate_races(competetor_positions)
+    print("Simulations complete!")
+
+    '''Give each bettor their alocated number of simulation results'''
+    update_bettor_opinions(lob_view, bettor_list, percent_complete, predicted_winners)
+    while t < 1:
+        timestep_market(bettors, bettor_list, exchange, percent_complete, t)
+        t += 1
+
+    '''In play betting'''
     while not race.is_finished():
-        '''Get the current competetor positions'''
-        competetor_positions = race.get_competetor_positions()
-        all_positions.append(competetor_positions)
-        print("Running simulations...")
-
-        '''Run all the simulations from these positions'''
-        predicted_winners = race_simulations.simulate_races(competetor_positions)
-        print("Simulations complete!")
-
-        odds = calculate_decimal_odds(n_competetors, predicted_winners)
-        all_odds.append(odds)
-
-        '''Give each bettor their alocated number of simulation results'''
-        update_bettor_opinions(lob_view, bettor_list, percent_complete, predicted_winners)
-
         '''Allow 1 timestep to pass in the 'ground truth' race'''
         race.step(opinion_update_period)
         percent_complete = race.get_percent_complete()
 
+        '''Get the current competetor positions'''
+        competetor_positions = race.get_competetor_positions()
+        all_positions.append(competetor_positions)
+
+        '''Run all the simulations from these positions'''
+        print("Running simulations...")
+        predicted_winners = race_simulations.simulate_races(competetor_positions)
+        print("Simulations complete!")
+
+        '''Give each bettor their alocated number of simulation results'''
+        update_bettor_opinions(lob_view, bettor_list, percent_complete, predicted_winners)
+
+        '''Log current overall odds'''
+        odds = calculate_decimal_odds(n_competetors, predicted_winners)
+        all_odds.append(odds)
+
+        '''Allow time to pass in the market before the next opinion update'''
         for i in range(actions_per_period):
-            '''Get a bet from a random bettor'''
-            rdm_bettor: Bettor
-            new_bet: Bet
-            rdm_bettor, new_bet = get_next_bet(bettor_list, lob_view, percent_complete, t)
-
-            '''If they want to post a new bet then...'''
-            if new_bet is not None:
-                '''Cancel all currently held bets'''
-                active_bets = rdm_bettor.get_active_bets()
-                active_bet: Bet
-                for active_bet in active_bets:
-                    exchange.cancel_bet(active_bet) # Remove bet from exchange
-                    active_bet.cancel() # Update state of bet
-                    rdm_bettor.cancel_bet(active_bet) # Remove bet from bettor
-                
-                '''Update bettor's internal record of currently held bets'''
-                rdm_bettor.add_bet(new_bet)
-                
-                '''
-                Add the new bet to the exchange, and retrieve the bets it
-                was matched with (if any) and the cost of placing the bet
-                '''
-                matched_this_bet = []
-                bet_cost = exchange.add_bet(new_bet, matched_this_bet)
-
-                '''Update the imutable view of the current state of the LOB'''
-                lob_view = exchange.get_lob_view()
-
-                '''
-                Charge the bettor the cost of the bet.
-                (May be less then estimated cost if it
-                was a lay bet and matched with bets with
-                better odds)
-                '''
-                rdm_bettor.deduct_funds(bet_cost)
-
-                '''Update the record of all matched bets'''
-                matched_bets.extend(matched_this_bet)
-
-                '''Notify each bettor of the newly matched bets'''
-                matched_bet: MatchedBet
-                for matched_bet in matched_this_bet:
-                    b1Id: int = matched_bet.get_backer_id()
-                    b2Id: int = matched_bet.get_layer_id()
-                    b1: Bettor = bettors[b1Id]
-                    b2: Bettor = bettors[b2Id]
-                    b1.bookkeep(matched_bet)
-                    b1.on_bet_matched(matched_bet)
-                    b2.bookkeep(matched_bet)
-                    b2.on_bet_matched(matched_bet)
-
-            '''Increment time'''
+            timestep_market(bettors, bettor_list, exchange, percent_complete, t)
             t += 1
 
     '''Refund money to bettors from all of their unmatched bets'''

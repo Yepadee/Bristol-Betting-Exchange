@@ -1,6 +1,7 @@
 {
     "opinion_update_period": 10,
     "actions_per_period": 80,
+    "pre_market_time": 600,
     "bettors" : [
         {
             "type": "NSE",
@@ -12,13 +13,13 @@
             "type": "PWB",
             "balance": 10000,
             "n_sims": [1, 100],
-            "quantity": 0
+            "quantity": 5
         },
         {
             "type": "BTL",
             "balance": 10000,
             "n_sims": [50, 100],
-            "quantity": 0
+            "quantity": 5
         },
         {
             "type": "LTB",

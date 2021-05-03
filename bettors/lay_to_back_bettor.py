@@ -80,17 +80,8 @@ class LayToBackBettor(Bettor):
                         max_stake = self._get_max_back_stake()
                         bet_stake = bet_stake if bet_stake > 200 else 200
                         bet_stake = bet_stake if bet_stake < max_stake else max_stake
-                        
-                        print("ms: ", max_stake)
-                        print("bs: ", bet_stake)
-                        print("bo: ", highest_odds)
-                        print("lo:", self.__layed_odds)
-                        print("ls: ", self.__layed_stake)
-                        print("---")
                         if bet_stake >= 200:
                             new_bet = self._new_back(event_id=self.__layed_event_id, odds=highest_odds, stake=bet_stake, time=time)
-                            print("lo: ", highest_odds)
-                            print(new_bet)
         return new_bet
 
 
