@@ -12,6 +12,7 @@ class RiskTakerBettor(Bettor):
         best_odds: int = 100000000
         best_event_id: int = None
         for event_id in lob_view:
+            if len(lob_view[event_id]["backs"]["odds"]) == 0: continue
             odds = lob_view[event_id]["backs"]["odds"][0]
             if odds < best_odds:
                 best_odds = odds
@@ -22,6 +23,7 @@ class RiskTakerBettor(Bettor):
         worst_odds: int = 0
         worst_event_id: int = None
         for event_id in lob_view:
+            if len(lob_view[event_id]["lays"]["odds"]) == 0: continue
             odds = lob_view[event_id]["lays"]["odds"][0]
             if odds > worst_odds:
                 worst_odds = odds
@@ -32,10 +34,11 @@ class RiskTakerBettor(Bettor):
         new_bet = None
         if self.get_balance() > 200:
             worst_competetor_id = self.get_worst_competitor(lob_view)
-            my_odds = lob_view[worst_competetor_id]["lays"]["odds"][0]
-            max_stake = self._get_max_back_stake(my_odds)
-            stake = max_stake if max_stake < 400 else max_stake // 2
-            new_bet = self._new_back(worst_competetor_id, my_odds, stake, time)
+            if worst_competetor_id is not None:
+                my_odds = lob_view[worst_competetor_id]["lays"]["odds"][0]
+                max_stake = self._get_max_back_stake()
+                stake = max_stake if max_stake < 400 else max_stake // 2
+                new_bet = self._new_back(worst_competetor_id, my_odds, stake, time)
 
         return new_bet
 
@@ -43,9 +46,11 @@ class RiskTakerBettor(Bettor):
         new_bet = None
         if self.get_balance() > 200:
             best_competetor_id = self.get_best_competitor(lob_view)
-            my_odds = lob_view[best_competetor_id]["backs"]["odds"][0]
-            max_stake = self._get_max_lay_stake(my_odds)
-            stake = max_stake if max_stake < 400 else max_stake // 2
-            new_bet = self._new_lay(best_competetor_id, my_odds, stake, time)
+            if best_competetor_id is not None:
+                my_odds = lob_view[best_competetor_id]["backs"]["odds"][0]
+                max_stake = self._get_max_lay_stake(my_odds)
+                stake = max_stake if max_stake < 400 else max_stake // 2
+                if stake > 200:
+                    new_bet = self._new_lay(best_competetor_id, my_odds, stake, time)
 
         return new_bet

@@ -18,6 +18,34 @@
             "quantity": 20
         },
         {
+            "type": "SHP",
+            "role": "lay",
+            "balance": 10000,
+            "n_sims": [1, 20],
+            "quantity": 20            
+        },
+        {
+            "type": "SHP",
+            "role": "back",
+            "balance": 10000,
+            "n_sims": [1, 20],
+            "quantity": 20            
+        },
+        {
+            "type": "RTB",
+            "role": "back",
+            "balance": 10000,
+            "n_sims": [1, 20],
+            "quantity": 20            
+        },
+        {
+            "type": "RTB",
+            "role": "lay",
+            "balance": 10000,
+            "n_sims": [1, 20],
+            "quantity": 20            
+        },
+        {
             "type": "PWB",
             "role": "back",
             "balance": 10000,
