@@ -1,9 +1,11 @@
 from bets import *
 from bettors.bettors import *
-from bettors.predicted_winner_bettor import *
 from bettors.back_to_lay_bettor import *
 from bettors.lay_to_back_bettor import *
+from bettors.predicted_win_bettor import *
 from bettors.noise_bettor import *
+from bettors.sheep_bettor import *
+from bettors.risk_taker_bettor import *
 
 from exchange import BettingExchange
 from plot_bets import plot_bets
@@ -20,7 +22,7 @@ from plot import plot_odds, plot_positions
 
 current_id: int = 0
 
-def load_bettor(bettor_type: str, balance: int, rng1: int, rng2: int, n_events: int, all_bettors: dict) -> None:
+def load_bettor(bettor_type: str, role: str, balance: int, rng1: int, rng2: int, n_events: int, all_bettors: dict) -> None:
     global current_id
 
     n_sims: int = np.random.randint(rng1, rng2)
@@ -31,9 +33,13 @@ def load_bettor(bettor_type: str, balance: int, rng1: int, rng2: int, n_events: 
     elif bettor_type == "LTB":
         bettor = LayToBackBettor(current_id, balance, n_sims, n_events)
     elif bettor_type == "PWB":
-        bettor = PredictedWinnerBettor(current_id, balance, n_sims, n_events)
+        bettor = PredictedWinBettor(current_id, balance, n_sims, n_events, role)
     elif bettor_type == "NSE":
-        bettor = NoiseBettor(current_id, balance, n_sims, n_events)
+        bettor = NoiseBettor(current_id, balance, n_sims, n_events, role)
+    elif bettor_type == "SHP":
+        bettor = SheepBettor(current_id, balance, n_sims, n_events, role)
+    elif bettor_type == "RTB":
+        bettor = RiskTakerBettor(current_id, balance, n_sims, n_events, role)
     else:
         raise Exception("ERROR: '%s' is an invalid bettor type!" % bettor_type)
 
@@ -42,13 +48,14 @@ def load_bettor(bettor_type: str, balance: int, rng1: int, rng2: int, n_events: 
 
 def load_bettors(all_bettors: dict, bettor_info: dict, n_events: int) -> None:
     bettor_type: str = bettor_info["type"]
+    role: str = bettor_info["role"]
     quantity: int = bettor_info["quantity"]
     balance: int = bettor_info["balance"]
     rng1 = bettor_info["n_sims"][0]
     rng2 = bettor_info["n_sims"][1]
     
     for i in range(quantity):
-        load_bettor(bettor_type, balance, rng1, rng2, n_events, all_bettors)
+        load_bettor(bettor_type, role, balance, rng1, rng2, n_events, all_bettors)
 
 def parse_config(n_events: int):
     '''
@@ -74,15 +81,14 @@ def parse_config(n_events: int):
 def get_num_simulations(bettors: list) -> int:
     return reduce((lambda acc, b: acc + b.get_num_simulations()), bettors, 0)
 
-def update_bettor_opinions(lob_view: dict, all_bettors: list, percent_complete: float, predicted_winners: np.int8) -> None:
+def update_bettor_opinions(n_events: int, all_bettors: list, predicted_winners: np.int8) -> None:
     last_index = 0
     bettor: Bettor
-    n_events = len(lob_view.keys())
     for bettor in all_bettors:
         num_sims = bettor.get_num_simulations()
         result_slice = predicted_winners[last_index : last_index + num_sims]
         decimal_odds = calculate_decimal_odds(n_events, result_slice)
-        bettor.on_opinion_update(lob_view, percent_complete, decimal_odds)
+        bettor.on_opinion_update(decimal_odds)
         last_index += num_sims
 
 def distribute_winnings(bettors: dict, matched_bets: list, successful_event_id: int) -> None:
@@ -118,7 +124,7 @@ def get_next_bet(bettor_list: list, lob_view: dict, percent_complete: float, t: 
 def timestep_market(bettors: dict, bettor_list:list, exchange: BettingExchange, percent_complete: float, t:int):
     '''Update the imutable view of the current state of the LOB'''
     lob_view = exchange.get_lob_view()
-
+    #print(lob_view)
     '''Get a bet from a random bettor'''
     rdm_bettor: Bettor
     new_bet: Bet
@@ -212,7 +218,7 @@ if __name__ == "__main__":
     print("Simulations complete!")
 
     '''Give each bettor their alocated number of simulation results'''
-    update_bettor_opinions(lob_view, bettor_list, percent_complete, predicted_winners)
+    update_bettor_opinions(n_competetors, bettor_list, predicted_winners)
     while t < 1:
         timestep_market(bettors, bettor_list, exchange, percent_complete, t)
         t += 1
@@ -233,18 +239,19 @@ if __name__ == "__main__":
         print("Simulations complete!")
 
         '''Give each bettor their alocated number of simulation results'''
-        update_bettor_opinions(lob_view, bettor_list, percent_complete, predicted_winners)
+        update_bettor_opinions(n_competetors, bettor_list, predicted_winners)
 
         '''Log current overall odds'''
         odds = calculate_decimal_odds(n_competetors, predicted_winners)
         all_odds.append(odds)
 
         '''Allow time to pass in the market before the next opinion update'''
-        for i in range(actions_per_period):
+        for _ in range(actions_per_period):
             timestep_market(bettors, bettor_list, exchange, percent_complete, t)
             t += 1
 
     '''Refund money to bettors from all of their unmatched bets'''
+    bettor: Bettor
     for bettor in bettor_list:
         bettor.cancel_unmatched()
 

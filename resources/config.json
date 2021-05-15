@@ -1,28 +1,39 @@
 {
     "opinion_update_period": 10,
-    "actions_per_period": 80,
-    "pre_market_time": 2000,
+    "actions_per_period": 200,
+    "pre_market_time": 200,
     "bettors" : [
         {
             "type": "NSE",
+            "role": "back",
+            "balance": 10000,
+            "n_sims": [1, 20],
+            "quantity": 20
+        },
+        {
+            "type": "NSE",
+            "role": "lay",
             "balance": 10000,
             "n_sims": [1, 20],
             "quantity": 20
         },
         {
             "type": "PWB",
+            "role": "back",
             "balance": 10000,
-            "n_sims": [1, 100],
+            "n_sims": [50, 100],
             "quantity": 5
         },
         {
             "type": "BTL",
+            "role": "NA",
             "balance": 10000,
             "n_sims": [50, 100],
             "quantity": 5
         },
         {
             "type": "LTB",
+            "role": "NA",
             "balance": 10000,
             "n_sims": [50, 100],
             "quantity": 5

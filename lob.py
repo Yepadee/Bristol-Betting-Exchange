@@ -98,7 +98,7 @@ class OrderBookHalf(object):
             total_matched += qty_matched
 
             if bet.get_stake() == bet.get_matched(): # If all of this bet's stake has been matched as a result of this match, remove it from the lob
-                self.__bets[bet.get_odds()].remove(bet) # TODO: test this acutally works :P
+                self.__bets[bet.get_odds()].remove(bet)
 
             self._total_stakes[bet.get_odds()] -= qty_matched # Update the total stake at these odds
             if self._total_stakes[bet.get_odds()] == 0:
@@ -231,7 +231,6 @@ class OrderBook(object):
         self.__event_id = event_id
         self.__backs = BackOrderBook()
         self.__lays = LayOrderBook()
-        self.__matched_bets = []
 
     def cancel_bet(self, bet: Bet):
         '''
@@ -265,7 +264,7 @@ class OrderBook(object):
 
         bet_cost = other_book.match_bet_better_odds(bet, matched_bets) # Attempt to match the bet with bets on the other side of the lob with better odds than those requested
         total_unmatched = other_book.match_bet_at_odds(bet, matched_bets)
-        if total_unmatched > 0: # If the bet wasnt totally matched, add it to the lob in the hope it can be matched by future bets
+        if total_unmatched > 0: # If the bet wasnt totally matched, add it to the lob in the hopes it can be matched by future bets
             order_book.add_bet(bet)
 
         return bet_cost

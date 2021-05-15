@@ -3,15 +3,15 @@ from lob import MatchedBet
 from bets import Bet
 from bets import *
 import numpy as np
-import sys
 
 class Bettor(object):
-    def __init__(self, name: str, id: int, balance: int, num_simulations: int, n_events: int):
+    def __init__(self, name: str, id: int, balance: int, num_simulations: int, n_events: int, role: str = "N/A"):
         self.__name: str = name
         self.__id: int = id
         self.__balance: int = balance
         self.__num_simulations: int = num_simulations
         self.__n_events: int = n_events
+        self.__role = role
 
         self.__initial_balance: int = balance
         self.__backs: list = []
@@ -131,14 +131,25 @@ class Bettor(object):
     def on_bet_matched(self, matched_bet: MatchedBet) -> None:
         pass
 
+    def get_back_bet(self, lob_view: dict, percent_complete: float, time: int) -> Bet:
+        pass
+
+    def get_lay_bet(self, lob_view: dict, percent_complete: float, time: int) -> Bet:
+        pass
+
     # The following methods should be implemented in a new betting agent:
     def get_bet(self, lob_view: dict, percent_complete: float, time: int) -> Bet:
         '''
         Returns either None, a Back or a Lay.
         '''
-        pass
+        if self.__role == "back":
+            return self.get_back_bet(lob_view, percent_complete, time)
+        elif self.__role == "lay":
+            return self.get_lay_bet(lob_view, percent_complete, time)
+        else:
+            raise Exception("Invalid bettor role '%s'!" % self.__role)
 
-    def on_opinion_update(self, lob_view: dict, percent_complete: float, decimal_odds: np.float32) -> None:
+    def on_opinion_update(self, decimal_odds: np.float32) -> None:
         self._previous_odds = decimal_odds
         '''
         Defines the actions the bettor should take in response
@@ -161,8 +172,8 @@ class Bettor(object):
 
 
     def __str__(self) -> str:
-        return '{name=%s, id=%d, n_sims=%d, profit=£%.2f, balance=£%.2f, backs=%d, lays=%d, matched=%d}' % \
-               (self.__name, self.__id, self.__num_simulations, self.get_profit()/100.0, self.__balance/100.0, len(self.__backs), len(self.__lays), len(self.__matched_bets))
+        return '{name=%s, role=%s, id=%d, n_sims=%d, profit=£%.2f, balance=£%.2f, backs=%d, lays=%d, matched=%d}' % \
+               (self.__name, self.__role, self.__id, self.__num_simulations, self.get_profit()/100.0, self.__balance/100.0, len(self.__backs), len(self.__lays), len(self.__matched_bets))
 
 
 
