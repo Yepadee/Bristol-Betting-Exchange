@@ -14,6 +14,7 @@ import random
 import json
 import sys
 from functools import reduce
+from time import time
 
 sys.path.append('../BBE-Racing-Sim/')
 from racesim import *
@@ -25,7 +26,7 @@ current_id: int = 0
 def load_bettor(bettor_type: str, role: str, balance: int, rng1: int, rng2: int, n_events: int, all_bettors: dict) -> None:
     global current_id
 
-    n_sims: int = np.random.randint(rng1, rng2)
+    n_sims: int = np.random.randint(rng1, rng2 + 1)
     bettor: Bettor = None
 
     if bettor_type == "BTL":
@@ -193,7 +194,7 @@ if __name__ == "__main__":
 
     '''Calculate total number of race simulations needed'''
     n_simulations: int = get_num_simulations(bettor_list)
-    n_simulations = 1<<(n_simulations-1).bit_length()
+    #n_simulations = 1<<(n_simulations-1).bit_length()
     print("num simulations: %d" % n_simulations)
 
     '''Create race simulation instances'''
@@ -213,10 +214,12 @@ if __name__ == "__main__":
     competetor_positions = race.get_competetor_positions()
 
     '''Run all the simulations from start positions'''
-    print("Running simulations...")
+    #print("Running simulations...")
     predicted_winners = race_simulations.simulate_races(competetor_positions)
-    print("Simulations complete!")
+    #print("Simulations complete!")
 
+
+    rtime = time()
     '''Give each bettor their alocated number of simulation results'''
     update_bettor_opinions(n_competetors, bettor_list, predicted_winners)
     while t < 1:
@@ -234,9 +237,9 @@ if __name__ == "__main__":
         all_positions.append(competetor_positions)
 
         '''Run all the simulations from these positions'''
-        print("Running simulations...")
+        #print("Running simulations...")
         predicted_winners = race_simulations.simulate_races(competetor_positions)
-        print("Simulations complete!")
+        #print("Simulations complete!")
 
         '''Give each bettor their alocated number of simulation results'''
         update_bettor_opinions(n_competetors, bettor_list, predicted_winners)
@@ -258,12 +261,15 @@ if __name__ == "__main__":
     '''Distribute winnings to all bettors'''
     distribute_winnings(bettors, matched_bets, race.get_winner())
 
+    rtime = time() - rtime
+    print("The BBE ran in", rtime, "seconds")
+
     bettor_list.sort(reverse=True, key=(lambda b: b.get_profit()))
     sum_bal = 0
     b: Bettor
     for b in bettor_list:
         sum_bal += b.get_balance()
-        print(b)
+        #print(b)
 
     f = open("output/matched_bets_log.txt", "w", encoding='utf-8')
     for b in bettor_list:
@@ -273,8 +279,8 @@ if __name__ == "__main__":
         f.write("\n")
     f.close()
 
-    print(lob_view)
-    print(sum_bal)
+    # print(lob_view)
+    # print(sum_bal)
     print(race.get_winner())
 
     all_positions = np.array(all_positions)

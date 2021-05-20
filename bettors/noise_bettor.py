@@ -3,7 +3,6 @@ from .bettors import *
 class NoiseBettor(Bettor):
     '''
     A bettor who picks a competitor to bet on at random from the start.
-    Either places backs 'NSB' or lays 'NSL' for this competitor.
     '''
 
     def __init__(self, id: int, balance: int, num_simulations: int, n_events: int, role: str):

@@ -21,9 +21,11 @@ class PredictedWinBettor(Bettor):
     def get_lay_bet(self, lob_view: dict, percent_complete: float, time: int) -> Bet:
         new_bet: Bet = None
         if self._previous_odds is not None and self.get_balance() > 200:
-            max_stake = self._get_max_lay_stake()
-            stake = max_stake if max_stake < 400 else max_stake // 2
+            
             worst_competetor_id = np.argmax(self._previous_odds) + 1
             my_odds = self._previous_odds[worst_competetor_id - 1]
-            new_bet = self._new_back(worst_competetor_id, my_odds, stake, time)
+            max_stake = self._get_max_lay_stake(my_odds)
+            stake = max_stake if max_stake < 400 else max_stake // 2
+            if stake > 200:
+                new_bet = self._new_lay(worst_competetor_id, my_odds, stake, time)
         return new_bet

@@ -1,70 +1,21 @@
 {
-    "opinion_update_period": 10,
-    "actions_per_period": 200,
-    "pre_market_time": 200,
+    "opinion_update_period": 3,
+    "actions_per_period": 100,
+    "pre_market_time": 0,
     "bettors" : [
         {
             "type": "NSE",
             "role": "back",
             "balance": 10000,
-            "n_sims": [1, 20],
-            "quantity": 20
+            "n_sims": [10, 10],
+            "quantity": 50
         },
         {
             "type": "NSE",
             "role": "lay",
             "balance": 10000,
-            "n_sims": [1, 20],
-            "quantity": 20
-        },
-        {
-            "type": "SHP",
-            "role": "lay",
-            "balance": 10000,
-            "n_sims": [1, 20],
-            "quantity": 20            
-        },
-        {
-            "type": "SHP",
-            "role": "back",
-            "balance": 10000,
-            "n_sims": [1, 20],
-            "quantity": 20            
-        },
-        {
-            "type": "RTB",
-            "role": "back",
-            "balance": 10000,
-            "n_sims": [1, 20],
-            "quantity": 20            
-        },
-        {
-            "type": "RTB",
-            "role": "lay",
-            "balance": 10000,
-            "n_sims": [1, 20],
-            "quantity": 20            
-        },
-        {
-            "type": "PWB",
-            "role": "back",
-            "balance": 10000,
-            "n_sims": [50, 100],
-            "quantity": 5
-        },
-        {
-            "type": "BTL",
-            "role": "NA",
-            "balance": 10000,
-            "n_sims": [50, 100],
-            "quantity": 5
-        },
-        {
-            "type": "LTB",
-            "role": "NA",
-            "balance": 10000,
-            "n_sims": [50, 100],
-            "quantity": 5
+            "n_sims": [10, 10],
+            "quantity": 50
         }
     ]
 }

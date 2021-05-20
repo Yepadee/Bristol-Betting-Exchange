@@ -29,7 +29,7 @@ def plot_bets(n_events: int, matched_bets: list, fig_path: str) -> None:
     ax.legend(list(competetor_odds.keys()), title='Horse', bbox_to_anchor=(1.00, 1), loc='upper left', fontsize='x-small')
     
     ax.set_ylabel('Decimal Odds')
-    ax.set_xlabel('Time/s')
+    ax.set_xlabel('Time (steps)')
 
     
 
